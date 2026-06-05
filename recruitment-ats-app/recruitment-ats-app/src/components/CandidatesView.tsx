@@ -1,17 +1,34 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Search, Download, Trash2, Eye, FileSpreadsheet, FileText, Users,
   Plus, X, Edit2, UserPlus, Save, Mail, Briefcase,
-  Clock, Award, Calendar, Filter
+  Clock, Award, Calendar, Filter, ChevronDown, ArrowUp, ArrowDown, ChevronsUpDown
 } from 'lucide-react';
 import type { Candidate, Stage, JobPosting } from '../lib/types';
 import { uid } from '../lib/storage';
 import {
   getInitials, avatarColor, stageColors, scoreColor,
-  downloadCSV, downloadExcel, downloadPDF
+  downloadCSV, downloadExcel, downloadPDF, formatDate
 } from '../lib/utils';
 import NationalityAutocomplete from './NationalityAutocomplete';
 import { useUi } from '../lib/uiContext';
+
+type ScoreBand = '80+' | '60-79' | '<60';
+type SortKey = 'name' | 'title' | 'experience' | 'contact' | 'score' | 'stage' | 'job' | 'date';
+type SortDir = 'asc' | 'desc';
+
+function parseUploadedDate(s: string): number {
+  if (!s) return 0;
+  const t = Date.parse(s);
+  if (!isNaN(t)) return t;
+  // Try "DD MMM YYYY" / "DD-MMM-YYYY"
+  const m = s.match(/(\d{1,2})[\s\-\/]([A-Za-z]{3,})[\s\-\/](\d{2,4})/);
+  if (m) {
+    const t2 = Date.parse(`${m[1]} ${m[2]} ${m[3]}`);
+    if (!isNaN(t2)) return t2;
+  }
+  return 0;
+}
 
 interface CandidatesViewProps {
   candidates: Candidate[];
@@ -78,12 +95,25 @@ export default function CandidatesView({
 }: CandidatesViewProps) {
   const { t } = useUi();
   const [search, setSearch] = useState('');
-  const [stageFilter, setStageFilter] = useState<Stage | 'all'>('all');
-  const [scoreFilter, setScoreFilter] = useState<'all' | '80+' | '60-79' | '<60'>('all');
-  const [jobFilter, setJobFilter] = useState<string>('all');           // job id or 'all' or 'none'
-  const [nationalityFilter, setNationalityFilter] = useState<string>('all');
-  const [skillFilter, setSkillFilter] = useState<string>('all');
+  // Multi-select filter state (empty Set = no filter)
+  const [stageFilter, setStageFilter] = useState<Set<Stage>>(new Set());
+  const [scoreFilter, setScoreFilter] = useState<Set<ScoreBand>>(new Set());
+  const [jobFilter, setJobFilter] = useState<Set<string>>(new Set());     // job id or '__none'
+  const [nationalityFilter, setNationalityFilter] = useState<Set<string>>(new Set());
+  const [skillFilter, setSkillFilter] = useState<Set<string>>(new Set());
   const [selected, setSelected] = useState<Set<string>>(new Set());
+
+  // Sort state
+  const [sortKey, setSortKey] = useState<SortKey | null>('date');
+  const [sortDir, setSortDir] = useState<SortDir>('desc');
+  function toggleSort(k: SortKey) {
+    if (sortKey === k) {
+      setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'));
+    } else {
+      setSortKey(k);
+      setSortDir(k === 'date' || k === 'score' || k === 'experience' ? 'desc' : 'asc');
+    }
+  }
 
   // Modal state
   const [mode, setMode] = useState<ModalMode>(null);
@@ -110,11 +140,17 @@ export default function CandidatesView({
 
   function clearFilters() {
     setSearch('');
-    setStageFilter('all');
-    setScoreFilter('all');
-    setJobFilter('all');
-    setNationalityFilter('all');
-    setSkillFilter('all');
+    setStageFilter(new Set());
+    setScoreFilter(new Set());
+    setJobFilter(new Set());
+    setNationalityFilter(new Set());
+    setSkillFilter(new Set());
+  }
+
+  function scoreBand(score: number): ScoreBand {
+    if (score >= 80) return '80+';
+    if (score >= 60) return '60-79';
+    return '<60';
   }
 
   function toggleSelect(id: string) {
@@ -175,17 +211,24 @@ export default function CandidatesView({
     closeModal();
   }
 
-  const filtered = candidates.filter((c) => {
-    if (stageFilter !== 'all' && c.stage !== stageFilter) return false;
-    if (scoreFilter === '80+' && c.ai_score < 80) return false;
-    if (scoreFilter === '60-79' && (c.ai_score < 60 || c.ai_score >= 80)) return false;
-    if (scoreFilter === '<60' && c.ai_score >= 60) return false;
-    if (jobFilter === 'none' && c.jobId) return false;
-    if (jobFilter !== 'all' && jobFilter !== 'none' && c.jobId !== jobFilter) return false;
-    if (nationalityFilter !== 'all' && (c.personal.nationality || '').trim() !== nationalityFilter) return false;
-    if (skillFilter !== 'all') {
-      const skills = [...(c.skills.technical || []), ...(c.skills.tools || [])].map((s) => s.toLowerCase());
-      if (!skills.includes(skillFilter.toLowerCase())) return false;
+  const filteredUnsorted = candidates.filter((c) => {
+    if (stageFilter.size > 0 && !stageFilter.has(c.stage)) return false;
+    if (scoreFilter.size > 0 && !scoreFilter.has(scoreBand(c.ai_score))) return false;
+    if (jobFilter.size > 0) {
+      const key = c.jobId || '__none';
+      if (!jobFilter.has(key)) return false;
+    }
+    if (nationalityFilter.size > 0) {
+      const n = (c.personal.nationality || '').trim();
+      if (!nationalityFilter.has(n)) return false;
+    }
+    if (skillFilter.size > 0) {
+      const skills = new Set(
+        [...(c.skills.technical || []), ...(c.skills.tools || [])].map((s) => s.toLowerCase())
+      );
+      let hit = false;
+      skillFilter.forEach((s) => { if (skills.has(s.toLowerCase())) hit = true; });
+      if (!hit) return false;
     }
     if (search) {
       const q = search.toLowerCase();
@@ -198,6 +241,35 @@ export default function CandidatesView({
     }
     return true;
   });
+
+  const STAGE_ORDER: Record<Stage, number> = {
+    applied: 0, screening: 1, interview: 2, offer: 3, hired: 4, rejected: 5
+  };
+
+  const filtered = useMemo(() => {
+    if (!sortKey) return filteredUnsorted;
+    const dir = sortDir === 'asc' ? 1 : -1;
+    const jobTitle = (c: Candidate) => jobs.find((j) => j.id === c.jobId)?.title || '';
+    const arr = [...filteredUnsorted];
+    arr.sort((a, b) => {
+      let av: number | string = 0;
+      let bv: number | string = 0;
+      switch (sortKey) {
+        case 'name': av = (a.personal.full_name || '').toLowerCase(); bv = (b.personal.full_name || '').toLowerCase(); break;
+        case 'title': av = (a.current_title || '').toLowerCase(); bv = (b.current_title || '').toLowerCase(); break;
+        case 'experience': av = a.total_experience_years || 0; bv = b.total_experience_years || 0; break;
+        case 'contact': av = (a.personal.email || a.personal.phone || '').toLowerCase(); bv = (b.personal.email || b.personal.phone || '').toLowerCase(); break;
+        case 'score': av = a.ai_score; bv = b.ai_score; break;
+        case 'stage': av = STAGE_ORDER[a.stage] ?? 99; bv = STAGE_ORDER[b.stage] ?? 99; break;
+        case 'job': av = jobTitle(a).toLowerCase(); bv = jobTitle(b).toLowerCase(); break;
+        case 'date': av = parseUploadedDate(a.uploadedAt); bv = parseUploadedDate(b.uploadedAt); break;
+      }
+      if (av < bv) return -1 * dir;
+      if (av > bv) return 1 * dir;
+      return 0;
+    });
+    return arr;
+  }, [filteredUnsorted, sortKey, sortDir, jobs]);
 
   const visibleIds = filtered.map((c) => c.id);
   const allVisibleSelected = visibleIds.length > 0 && visibleIds.every((id) => selected.has(id));
@@ -272,8 +344,29 @@ export default function CandidatesView({
     }
   }
 
-  const anyFilter = stageFilter !== 'all' || scoreFilter !== 'all' || jobFilter !== 'all'
-    || nationalityFilter !== 'all' || skillFilter !== 'all' || search.trim().length > 0;
+  const anyFilter = stageFilter.size > 0 || scoreFilter.size > 0 || jobFilter.size > 0
+    || nationalityFilter.size > 0 || skillFilter.size > 0 || search.trim().length > 0;
+
+  // Options for multi-selects
+  const stageOpts: { value: Stage; label: string }[] = [
+    { value: 'applied',   label: 'Applied' },
+    { value: 'screening', label: 'Screening' },
+    { value: 'interview', label: 'Interview' },
+    { value: 'offer',     label: 'Offer' },
+    { value: 'hired',     label: 'Hired' },
+    { value: 'rejected',  label: 'Rejected' }
+  ];
+  const scoreOpts: { value: ScoreBand; label: string }[] = [
+    { value: '80+',   label: 'Score 80+' },
+    { value: '60-79', label: 'Score 60-79' },
+    { value: '<60',   label: 'Score < 60' }
+  ];
+  const jobOpts: { value: string; label: string }[] = [
+    { value: '__none', label: t('cand.noJobLinked') },
+    ...jobs.map((j) => ({ value: j.id, label: j.title }))
+  ];
+  const nationalityOpts = nationalities.map((n) => ({ value: n, label: n }));
+  const skillOpts = allSkills.map((s) => ({ value: s, label: s }));
 
   return (
     <div className="h-full overflow-y-auto bg-slate-50 p-5 dark:bg-slate-950">
@@ -325,60 +418,38 @@ export default function CandidatesView({
             className="flex-1 bg-transparent text-xs outline-none text-slate-900 dark:text-slate-100"
           />
         </div>
-        <select
-          value={stageFilter}
-          onChange={(e) => setStageFilter(e.target.value as any)}
-          className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs outline-none focus:border-brand-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
-        >
-          <option value="all">{t('cand.allStages')}</option>
-          <option value="applied">Applied</option>
-          <option value="screening">Screening</option>
-          <option value="interview">Interview</option>
-          <option value="offer">Offer</option>
-          <option value="hired">Hired</option>
-          <option value="rejected">Rejected</option>
-        </select>
-        <select
-          value={jobFilter}
-          onChange={(e) => setJobFilter(e.target.value)}
-          className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs outline-none focus:border-brand-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
-        >
-          <option value="all">{t('cand.allJobs')}</option>
-          <option value="none">{t('cand.noJobLinked')}</option>
-          {jobs.map((j) => (
-            <option key={j.id} value={j.id}>{j.title}</option>
-          ))}
-        </select>
-        <select
-          value={nationalityFilter}
-          onChange={(e) => setNationalityFilter(e.target.value)}
-          className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs outline-none focus:border-brand-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
-        >
-          <option value="all">{t('cand.allNationalities')}</option>
-          {nationalities.map((n) => (
-            <option key={n} value={n}>{n}</option>
-          ))}
-        </select>
-        <select
-          value={skillFilter}
-          onChange={(e) => setSkillFilter(e.target.value)}
-          className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs outline-none focus:border-brand-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
-        >
-          <option value="all">{t('cand.allSkills')}</option>
-          {allSkills.map((s) => (
-            <option key={s} value={s}>{s}</option>
-          ))}
-        </select>
-        <select
-          value={scoreFilter}
-          onChange={(e) => setScoreFilter(e.target.value as any)}
-          className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs outline-none focus:border-brand-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
-        >
-          <option value="all">{t('cand.allScores')}</option>
-          <option value="80+">Score 80+</option>
-          <option value="60-79">Score 60-79</option>
-          <option value="<60">Score &lt; 60</option>
-        </select>
+        <MultiSelect
+          label={t('cand.allStages')}
+          selected={stageFilter}
+          options={stageOpts}
+          onChange={(s) => setStageFilter(s as Set<Stage>)}
+        />
+        <MultiSelect
+          label={t('cand.allJobs')}
+          selected={jobFilter}
+          options={jobOpts}
+          onChange={setJobFilter}
+        />
+        <MultiSelect
+          label={t('cand.allNationalities')}
+          selected={nationalityFilter}
+          options={nationalityOpts}
+          onChange={setNationalityFilter}
+          searchable
+        />
+        <MultiSelect
+          label={t('cand.allSkills')}
+          selected={skillFilter}
+          options={skillOpts}
+          onChange={setSkillFilter}
+          searchable
+        />
+        <MultiSelect
+          label={t('cand.allScores')}
+          selected={scoreFilter}
+          options={scoreOpts}
+          onChange={(s) => setScoreFilter(s as Set<ScoreBand>)}
+        />
         {anyFilter && (
           <button
             onClick={clearFilters}
@@ -447,12 +518,13 @@ export default function CandidatesView({
                       aria-label="Select all visible"
                     />
                   </th>
-                  <th className="px-3 py-2.5 text-start font-semibold">{t('cand.colCandidate')}</th>
-                  <th className="px-3 py-2.5 text-start font-semibold">{t('cand.colTitle')}</th>
-                  <th className="px-3 py-2.5 text-start font-semibold">{t('cand.colContact')}</th>
-                  <th className="px-3 py-2.5 text-center font-semibold">{t('cand.colScore')}</th>
-                  <th className="px-3 py-2.5 text-center font-semibold">{t('cand.colStage')}</th>
-                  <th className="px-3 py-2.5 text-start font-semibold">{t('cand.colJob')}</th>
+                  <SortHeader col="name"       label={t('cand.colCandidate')} sortKey={sortKey} sortDir={sortDir} onSort={toggleSort} />
+                  <SortHeader col="title"      label={t('cand.colTitle')}     sortKey={sortKey} sortDir={sortDir} onSort={toggleSort} />
+                  <SortHeader col="contact"    label={t('cand.colContact')}   sortKey={sortKey} sortDir={sortDir} onSort={toggleSort} />
+                  <SortHeader col="score"      label={t('cand.colScore')}     sortKey={sortKey} sortDir={sortDir} onSort={toggleSort} align="center" />
+                  <SortHeader col="stage"      label={t('cand.colStage')}     sortKey={sortKey} sortDir={sortDir} onSort={toggleSort} align="center" />
+                  <SortHeader col="job"        label={t('cand.colJob')}       sortKey={sortKey} sortDir={sortDir} onSort={toggleSort} />
+                  <SortHeader col="date"       label={t('cand.colDate')}      sortKey={sortKey} sortDir={sortDir} onSort={toggleSort} />
                   <th className="px-3 py-2.5 text-end font-semibold">{t('cand.colActions')}</th>
                 </tr>
               </thead>
@@ -540,6 +612,9 @@ export default function CandidatesView({
                           <span className="text-[10px] text-slate-400">—</span>
                         )}
                       </td>
+                      <td className="px-3 py-2.5 whitespace-nowrap text-[11px] text-slate-600 dark:text-slate-300">
+                        {c.uploadedAt ? formatDate(c.uploadedAt) || c.uploadedAt : <span className="text-slate-400">—</span>}
+                      </td>
                       <td className="px-3 py-2.5 text-end">
                         <div className="flex justify-end gap-1">
                           <button
@@ -595,6 +670,178 @@ export default function CandidatesView({
           onClose={closeModal}
           onSwitchToEdit={() => setMode('edit')}
         />
+      )}
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────
+// SORTABLE COLUMN HEADER
+// ─────────────────────────────────────────────────────────────
+
+function SortHeader({
+  col, label, sortKey, sortDir, onSort, align = 'start'
+}: {
+  col: SortKey;
+  label: string;
+  sortKey: SortKey | null;
+  sortDir: SortDir;
+  onSort: (k: SortKey) => void;
+  align?: 'start' | 'center' | 'end';
+}) {
+  const active = sortKey === col;
+  const Icon = !active ? ChevronsUpDown : sortDir === 'asc' ? ArrowUp : ArrowDown;
+  const alignClass = align === 'center' ? 'justify-center' : align === 'end' ? 'justify-end' : 'justify-start';
+  return (
+    <th className={`px-3 py-2.5 font-semibold text-${align}`}>
+      <button
+        type="button"
+        onClick={() => onSort(col)}
+        className={`flex w-full items-center gap-1 ${alignClass} ${active ? 'text-brand-500 dark:text-blue-300' : 'hover:text-slate-700 dark:hover:text-slate-200'}`}
+      >
+        <span>{label}</span>
+        <Icon size={11} className={active ? '' : 'opacity-40'} />
+      </button>
+    </th>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────
+// MULTI-SELECT POPOVER
+// ─────────────────────────────────────────────────────────────
+
+interface MultiOption {
+  value: string;
+  label: string;
+}
+
+function MultiSelect({
+  label, selected, options, onChange, searchable = false
+}: {
+  label: string;
+  selected: Set<string>;
+  options: MultiOption[];
+  onChange: (next: Set<string>) => void;
+  searchable?: boolean;
+}) {
+  const [open, setOpen] = useState(false);
+  const [q, setQ] = useState('');
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    function onDoc(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    }
+    function onKey(e: KeyboardEvent) { if (e.key === 'Escape') setOpen(false); }
+    document.addEventListener('mousedown', onDoc);
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('mousedown', onDoc);
+      document.removeEventListener('keydown', onKey);
+    };
+  }, [open]);
+
+  const filteredOpts = searchable && q
+    ? options.filter((o) => o.label.toLowerCase().includes(q.toLowerCase()))
+    : options;
+
+  function toggle(v: string) {
+    const next = new Set(selected);
+    if (next.has(v)) next.delete(v);
+    else next.add(v);
+    onChange(next);
+  }
+
+  const summary =
+    selected.size === 0
+      ? label
+      : selected.size === 1
+      ? options.find((o) => o.value === [...selected][0])?.label ?? `1 selected`
+      : selected.size <= 2
+      ? options.filter((o) => selected.has(o.value)).map((o) => o.label).join(', ')
+      : `${selected.size} selected`;
+
+  return (
+    <div ref={ref} className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen((p) => !p)}
+        className={`flex w-full items-center justify-between gap-1.5 rounded-lg border bg-white px-3 py-2 text-xs outline-none focus:border-brand-500 dark:bg-slate-900 dark:text-slate-100 ${
+          selected.size > 0
+            ? 'border-brand-300 dark:border-blue-700'
+            : 'border-slate-200 dark:border-slate-700'
+        }`}
+      >
+        <span className={`truncate ${selected.size === 0 ? 'text-slate-500 dark:text-slate-400' : 'font-semibold text-slate-800 dark:text-slate-100'}`}>
+          {summary}
+        </span>
+        <span className="flex items-center gap-1">
+          {selected.size > 0 && (
+            <span
+              role="button"
+              tabIndex={0}
+              onClick={(e) => { e.stopPropagation(); onChange(new Set()); }}
+              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onChange(new Set()); } }}
+              className="rounded p-0.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800"
+              title="Clear"
+            >
+              <X size={11} />
+            </span>
+          )}
+          <ChevronDown size={12} className={`text-slate-400 transition-transform ${open ? 'rotate-180' : ''}`} />
+        </span>
+      </button>
+      {open && (
+        <div className="absolute z-30 mt-1 max-h-72 w-72 overflow-hidden rounded-lg border border-slate-200 bg-white shadow-xl dark:border-slate-700 dark:bg-slate-800">
+          {searchable && (
+            <div className="border-b border-slate-100 px-2 py-1.5 dark:border-slate-700">
+              <input
+                value={q}
+                onChange={(e) => setQ(e.target.value)}
+                placeholder="Search…"
+                className="w-full rounded border border-slate-200 bg-white px-2 py-1 text-xs outline-none focus:border-brand-500 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100"
+                autoFocus
+              />
+            </div>
+          )}
+          <div className="max-h-56 overflow-y-auto py-1">
+            {filteredOpts.length === 0 ? (
+              <div className="px-3 py-4 text-center text-[11px] text-slate-400">No options</div>
+            ) : (
+              filteredOpts.map((opt) => {
+                const checked = selected.has(opt.value);
+                return (
+                  <label
+                    key={opt.value}
+                    className="flex cursor-pointer items-center gap-2 px-3 py-1.5 text-xs hover:bg-slate-50 dark:hover:bg-slate-700/60"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={checked}
+                      onChange={() => toggle(opt.value)}
+                      className="h-3.5 w-3.5 cursor-pointer accent-brand-500"
+                    />
+                    <span className={`flex-1 truncate ${checked ? 'font-semibold text-slate-900 dark:text-slate-100' : 'text-slate-700 dark:text-slate-200'}`}>
+                      {opt.label}
+                    </span>
+                  </label>
+                );
+              })
+            )}
+          </div>
+          {selected.size > 0 && (
+            <div className="flex items-center justify-between border-t border-slate-100 px-3 py-1.5 text-[11px] dark:border-slate-700">
+              <span className="text-slate-500 dark:text-slate-400">{selected.size} selected</span>
+              <button
+                onClick={() => onChange(new Set())}
+                className="rounded px-2 py-0.5 font-semibold text-brand-500 hover:bg-blue-50 dark:text-blue-300 dark:hover:bg-blue-900/30"
+              >
+                Clear
+              </button>
+            </div>
+          )}
+        </div>
       )}
     </div>
   );

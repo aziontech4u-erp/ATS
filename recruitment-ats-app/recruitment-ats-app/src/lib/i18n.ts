@@ -61,7 +61,9 @@ export const dictionaries: Record<Lang, Record<string, string>> = {
     'cand.colScore': 'Score',
     'cand.colStage': 'Stage',
     'cand.colJob': 'Job Linked',
+    'cand.colDate': 'Date',
     'cand.colActions': 'Actions',
+    'cand.multi.selected': '{n} selected',
 
     // Company Settings
     'company.title': 'Company Settings',
@@ -136,7 +138,9 @@ export const dictionaries: Record<Lang, Record<string, string>> = {
     'cand.colScore': 'التقييم',
     'cand.colStage': 'المرحلة',
     'cand.colJob': 'الوظيفة المرتبطة',
+    'cand.colDate': 'التاريخ',
     'cand.colActions': 'إجراءات',
+    'cand.multi.selected': 'تم اختيار {n}',
 
     'company.title': 'إعدادات الشركة',
     'company.subtitle': 'قم بتهيئة مؤسستك والمستخدمين والتكاملات',

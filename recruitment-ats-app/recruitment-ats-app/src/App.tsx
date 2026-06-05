@@ -12,6 +12,7 @@ import ReportsView from './components/ReportsView';
 import SettingsModal from './components/SettingsModal';
 import LoginView from './components/LoginView';
 import CompanySettingsView from './components/CompanySettingsView';
+import IntakeFormView from './components/IntakeFormView';
 import Toast, { type ToastMessage } from './components/Toast';
 import {
   loadState, saveState, loadApiKey, saveApiKey, uid
@@ -34,6 +35,12 @@ export default function App() {
   const [loaded, setLoaded] = useState(false);
 
   const { user } = useUi();
+
+  // ── Public intake form route (no auth required) ──
+  const isIntake = typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('intake') === '1';
+  if (isIntake) {
+    return <IntakeFormView />;
+  }
 
   // ── Load initial state ──
   useEffect(() => {

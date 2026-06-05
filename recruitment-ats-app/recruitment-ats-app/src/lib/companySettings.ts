@@ -58,7 +58,8 @@ export function defaultCompanySettings(): CompanySettings {
       passwordMinLength: 8,
       ipAllowlist: []
     },
-    audit: []
+    audit: [],
+    intakeWebhook: { url: '', enabled: false }
   };
 }
 
@@ -75,7 +76,8 @@ export function loadCompanySettings(): CompanySettings {
       integrations: parsed.integrations && parsed.integrations.length ? parsed.integrations : def.integrations,
       appearance: { ...def.appearance, ...(parsed.appearance || {}) },
       security: { ...def.security, ...(parsed.security || {}) },
-      audit: parsed.audit || []
+      audit: parsed.audit || [],
+      intakeWebhook: { ...def.intakeWebhook!, ...(parsed.intakeWebhook || {}) }
     };
   } catch {
     return defaultCompanySettings();

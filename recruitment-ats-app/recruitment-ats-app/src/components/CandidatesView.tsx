@@ -2,7 +2,8 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Search, Download, Trash2, Eye, FileSpreadsheet, FileText, Users,
   Plus, X, Edit2, UserPlus, Save, Mail, Briefcase,
-  Clock, Award, Calendar, Filter, ChevronDown, ArrowUp, ArrowDown, ChevronsUpDown
+  Clock, Award, Calendar, Filter, ChevronDown, ArrowUp, ArrowDown, ChevronsUpDown,
+  Send, Link as LinkIcon, MessageCircle, CheckCircle2, AlertTriangle, Info
 } from 'lucide-react';
 import type { Candidate, Stage, JobPosting } from '../lib/types';
 import { uid } from '../lib/storage';
@@ -12,6 +13,11 @@ import {
 } from '../lib/utils';
 import NationalityAutocomplete from './NationalityAutocomplete';
 import { useUi } from '../lib/uiContext';
+import {
+  buildIntakeUrl, buildMailtoUrl, buildWhatsAppUrl,
+  computeScreeningFlags, buildIntakeSummary, intakeMessageTemplate
+} from '../lib/intake';
+import { loadCompanySettings } from '../lib/companySettings';
 
 type ScoreBand = '80+' | '60-79' | '<60';
 type SortKey = 'name' | 'title' | 'experience' | 'contact' | 'score' | 'stage' | 'job' | 'date';
@@ -553,8 +559,19 @@ export default function CandidatesView({
                             {getInitials(c.personal.full_name)}
                           </div>
                           <div>
-                            <div className="text-[11px] font-semibold text-slate-900 dark:text-slate-100">
-                              {c.personal.full_name || 'Unknown'}
+                            <div className="flex items-center gap-1.5">
+                              <span className="text-[11px] font-semibold text-slate-900 dark:text-slate-100">
+                                {c.personal.full_name || 'Unknown'}
+                              </span>
+                              {c.intake?.submittedAt ? (
+                                <span title="Profile completed" className="inline-flex items-center gap-0.5 rounded-full bg-green-50 px-1.5 py-px text-[9px] font-bold text-green-700 dark:bg-green-900/40 dark:text-green-300">
+                                  <CheckCircle2 size={9} /> Profile
+                                </span>
+                              ) : c.intakeRequestedAt ? (
+                                <span title="Intake invite sent" className="inline-flex items-center gap-0.5 rounded-full bg-amber-50 px-1.5 py-px text-[9px] font-bold text-amber-700 dark:bg-amber-900/40 dark:text-amber-300">
+                                  <Send size={9} /> Invited
+                                </span>
+                              ) : null}
                             </div>
                             <div className="text-[10px] text-slate-500 dark:text-slate-400">
                               {c.personal.nationality || c.personal.country || c.source}
@@ -861,7 +878,7 @@ interface ModalProps {
   onSwitchToEdit: () => void;
 }
 
-type Tab = 'personal' | 'professional' | 'skills' | 'experience' | 'education' | 'notes';
+type Tab = 'personal' | 'professional' | 'skills' | 'experience' | 'education' | 'intake' | 'notes';
 
 function CandidateModal({
   mode, draft, setDraft, jobs, onSave, onClose, onSwitchToEdit
@@ -938,6 +955,7 @@ function CandidateModal({
             ['skills', 'Skills', Award],
             ['experience', 'Experience', Clock],
             ['education', 'Education', Calendar],
+            ['intake', 'Intake / Send Form', Send],
             ['notes', 'Notes', FileText]
           ] as const).map(([k, label, Icon]) => (
             <button
@@ -1269,6 +1287,10 @@ function CandidateModal({
             />
           )}
 
+          {tab === 'intake' && (
+            <IntakeTab draft={draft} jobs={jobs} setDraft={setDraft} readOnly={readOnly} />
+          )}
+
           {tab === 'notes' && (
             <div className="space-y-3">
               <Field label="Recruiter Notes" readOnly={readOnly}>
@@ -1387,6 +1409,212 @@ function TextArea({
       rows={rows}
       className="w-full rounded-lg border border-slate-200 px-3 py-2 text-xs outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 resize-y"
     />
+  );
+}
+
+// ── Intake / Send-form tab ─────────────────────────────────────
+
+function IntakeTab({
+  draft, jobs, setDraft, readOnly
+}: { draft: Candidate; jobs: JobPosting[]; setDraft: (c: Candidate) => void; readOnly: boolean }) {
+  const company = loadCompanySettings();
+  const job = jobs.find((j) => j.id === draft.jobId);
+  const intakeUrl = buildIntakeUrl({
+    email: draft.personal.email,
+    name: draft.personal.full_name,
+    phone: draft.personal.phone,
+    jobId: draft.jobId
+  });
+  const message = intakeMessageTemplate({
+    name: draft.personal.full_name,
+    companyName: company.profile.name || 'Our Company',
+    jobTitle: job?.title,
+    url: intakeUrl
+  });
+  const waUrl = buildWhatsAppUrl(draft.personal.phone, message);
+  const mailUrl = buildMailtoUrl(draft.personal.email, `Complete your profile — ${company.profile.name || 'Recruitment'}`, message);
+
+  const flags = computeScreeningFlags(draft, jobs);
+  const summary = buildIntakeSummary(draft, jobs);
+  const completed = !!draft.intake?.submittedAt;
+
+  async function copyLink() {
+    try {
+      await navigator.clipboard.writeText(intakeUrl);
+    } catch {
+      // fallback
+      const el = document.createElement('input');
+      el.value = intakeUrl;
+      document.body.appendChild(el);
+      el.select();
+      document.execCommand('copy');
+      el.remove();
+    }
+  }
+
+  function markInviteSent() {
+    setDraft({ ...draft, intakeRequestedAt: new Date().toISOString() });
+  }
+
+  return (
+    <div className="space-y-4">
+      {/* Completion status */}
+      <div className={`flex items-center gap-3 rounded-xl border px-4 py-3 ${
+        completed
+          ? 'border-green-200 bg-green-50 dark:border-green-900/50 dark:bg-green-900/20'
+          : 'border-amber-200 bg-amber-50 dark:border-amber-900/50 dark:bg-amber-900/20'
+      }`}>
+        {completed
+          ? <CheckCircle2 size={18} className="text-green-700 dark:text-green-300" />
+          : <AlertTriangle size={18} className="text-amber-700 dark:text-amber-300" />}
+        <div className="flex-1 text-xs">
+          <div className={`font-bold ${completed ? 'text-green-800 dark:text-green-200' : 'text-amber-800 dark:text-amber-200'}`}>
+            {completed ? 'Profile Completed' : 'Intake Pending'}
+          </div>
+          <div className={completed ? 'text-green-700/80 dark:text-green-200/80' : 'text-amber-700/80 dark:text-amber-200/80'}>
+            {completed
+              ? `Submitted ${new Date(draft.intake!.submittedAt).toLocaleString()}`
+              : draft.intakeRequestedAt
+                ? `Invite sent ${new Date(draft.intakeRequestedAt).toLocaleString()}`
+                : 'Send the intake form to capture salary, notice, visa and relocation details.'}
+          </div>
+        </div>
+      </div>
+
+      {/* Share actions */}
+      <div className="rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-900">
+        <div className="mb-2 text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Send Intake Form</div>
+        <p className="mb-3 text-[11px] leading-relaxed text-slate-500 dark:text-slate-400">
+          Pre-filled link with the candidate's name and email. WhatsApp and Email open the candidate's default app
+          with an editable message; nothing is sent automatically.
+        </p>
+        <div className="flex flex-wrap gap-2">
+          <button
+            type="button"
+            onClick={copyLink}
+            className="flex items-center gap-1.5 rounded-lg border border-blue-200 bg-white px-3 py-2 text-xs font-semibold text-brand-500 hover:bg-blue-50 dark:border-slate-700 dark:bg-slate-800 dark:text-blue-300"
+          >
+            <LinkIcon size={13} /> Copy Link
+          </button>
+          <a
+            href={waUrl || '#'}
+            onClick={(e) => { if (!waUrl) { e.preventDefault(); return; } markInviteSent(); }}
+            target="_blank"
+            rel="noreferrer"
+            className={`flex items-center gap-1.5 rounded-lg border px-3 py-2 text-xs font-semibold ${
+              waUrl
+                ? 'border-green-200 bg-white text-green-700 hover:bg-green-50 dark:border-slate-700 dark:bg-slate-800 dark:text-green-300'
+                : 'border-slate-200 bg-slate-50 text-slate-400 cursor-not-allowed dark:border-slate-700 dark:bg-slate-800'
+            }`}
+          >
+            <MessageCircle size={13} /> WhatsApp
+          </a>
+          <a
+            href={mailUrl || '#'}
+            onClick={(e) => { if (!mailUrl) { e.preventDefault(); return; } markInviteSent(); }}
+            className={`flex items-center gap-1.5 rounded-lg border px-3 py-2 text-xs font-semibold ${
+              mailUrl
+                ? 'border-rose-200 bg-white text-rose-600 hover:bg-rose-50 dark:border-slate-700 dark:bg-slate-800 dark:text-rose-300'
+                : 'border-slate-200 bg-slate-50 text-slate-400 cursor-not-allowed dark:border-slate-700 dark:bg-slate-800'
+            }`}
+          >
+            <Mail size={13} /> Email
+          </a>
+          <button
+            type="button"
+            onClick={markInviteSent}
+            disabled={readOnly}
+            className="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-50 disabled:opacity-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300"
+          >
+            <Send size={13} /> Mark as Sent
+          </button>
+        </div>
+        <div className="mt-3 break-all rounded border border-dashed border-slate-200 bg-slate-50 p-2 font-mono text-[10.5px] text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300">
+          {intakeUrl}
+        </div>
+        <div className="mt-2 text-[10.5px] text-slate-400">Message preview:</div>
+        <pre className="whitespace-pre-wrap rounded border border-dashed border-slate-200 bg-slate-50 p-2 text-[10.5px] text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300">{message}</pre>
+      </div>
+
+      {/* Intake data display */}
+      {completed ? (
+        <div className="rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-900">
+          <div className="mb-3 text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Submitted Profile</div>
+          <div className="grid grid-cols-2 gap-3 text-xs">
+            <KeyVal k="Current Salary" v={draft.intake!.currentSalary} />
+            <KeyVal k="Expected Salary" v={draft.intake!.expectedSalary} />
+            <KeyVal k="Notice Period" v={draft.intake!.noticePeriod ? draft.intake!.noticePeriod.replace('_', ' ') : ''} />
+            <KeyVal k="Availability" v={draft.intake!.availability} />
+            <KeyVal k="Total Exp (yrs)" v={String(draft.intake!.totalExperienceYears)} />
+            <KeyVal k="Relevant Exp (yrs)" v={String(draft.intake!.relevantExperienceYears)} />
+            <KeyVal k="Current Location" v={draft.intake!.currentLocation} />
+            <KeyVal k="Visa Status" v={draft.intake!.visaStatus} />
+            <KeyVal k="Willing to Relocate" v={draft.intake!.willingToRelocate ? 'Yes' : 'No'} />
+            <KeyVal k="Preferred Locations" v={draft.intake!.preferredLocations} />
+          </div>
+          {draft.intake!.skills.length > 0 && (
+            <div className="mt-3">
+              <div className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">Skills</div>
+              <div className="flex flex-wrap gap-1.5">
+                {draft.intake!.skills.map((s) => (
+                  <span key={s} className="rounded-full bg-blue-50 px-2 py-0.5 text-[10px] font-medium text-brand-500 dark:bg-blue-900/40 dark:text-blue-300">{s}</span>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      ) : null}
+
+      {/* AI summary */}
+      {completed && (
+        <div className="rounded-xl border border-blue-100 bg-gradient-to-br from-blue-50 to-indigo-50 p-4 dark:border-blue-900/50 dark:from-blue-900/20 dark:to-indigo-900/20">
+          <div className="mb-2 text-[10px] font-bold uppercase tracking-wider text-brand-500 dark:text-blue-300">AI Summary</div>
+          <ul className="space-y-1 text-xs text-slate-700 dark:text-slate-200">
+            {summary.map((line, i) => (
+              <li key={i} className="flex items-start gap-1.5">
+                <span className="mt-1 inline-block h-1 w-1 rounded-full bg-brand-500" />
+                {line}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {/* Screening flags */}
+      {flags.length > 0 && (
+        <div className="rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-900">
+          <div className="mb-2 text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Screening Flags</div>
+          <div className="flex flex-wrap gap-2">
+            {flags.map((f) => (
+              <span
+                key={f.id}
+                className={`flex items-center gap-1 rounded-full px-2.5 py-1 text-[10.5px] font-semibold ${
+                  f.level === 'block'
+                    ? 'bg-rose-50 text-rose-700 dark:bg-rose-900/30 dark:text-rose-300'
+                    : f.level === 'warn'
+                    ? 'bg-amber-50 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300'
+                    : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300'
+                }`}
+              >
+                {f.level === 'block' ? <AlertTriangle size={11} /> : f.level === 'warn' ? <AlertTriangle size={11} /> : <Info size={11} />}
+                {f.label}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function KeyVal({ k, v }: { k: string; v: string }) {
+  return (
+    <div>
+      <div className="text-[10px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">{k}</div>
+      <div className="rounded-md bg-slate-50 px-2.5 py-1.5 text-xs text-slate-800 dark:bg-slate-800 dark:text-slate-100 min-h-[28px]">
+        {v || <span className="text-slate-400">—</span>}
+      </div>
+    </div>
   );
 }
 

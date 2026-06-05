@@ -86,6 +86,24 @@ export interface ParsedResume {
   omanization_eligible: boolean;
 }
 
+export type NoticePeriod = '' | 'immediate' | '15_days' | '30_days' | '60_days' | '90_days';
+
+export interface IntakeData {
+  submittedAt: string;             // ISO timestamp
+  source: 'intake_form' | 'webhook' | 'manual';
+  currentSalary: string;
+  expectedSalary: string;
+  noticePeriod: NoticePeriod;
+  totalExperienceYears: number;
+  relevantExperienceYears: number;
+  willingToRelocate: boolean;
+  preferredLocations: string;      // comma-separated
+  currentLocation: string;
+  visaStatus: string;
+  skills: string[];                // free-form multi-skill
+  availability: string;            // e.g. "Weekdays after 5pm"
+}
+
 export interface Candidate extends ParsedResume {
   id: string;
   filename: string;
@@ -97,6 +115,8 @@ export interface Candidate extends ParsedResume {
   jobId?: string;       // Linked to a job posting
   notes?: string;
   rating?: number;      // 0-5 manual rating
+  intake?: IntakeData;  // Present when candidate completed the intake form
+  intakeRequestedAt?: string; // ISO timestamp when invite was last sent
 }
 
 export interface JobPosting {
@@ -225,6 +245,11 @@ export interface AuditEntry {
   target: string;
 }
 
+export interface IntakeWebhook {
+  url: string;          // POST target for intake submissions (n8n / Zapier / custom)
+  enabled: boolean;
+}
+
 export interface CompanySettings {
   profile: CompanyProfile;
   users: UserAccount[];
@@ -233,6 +258,7 @@ export interface CompanySettings {
   appearance: AppearancePrefs;
   security: SecurityPrefs;
   audit: AuditEntry[];
+  intakeWebhook?: IntakeWebhook;
 }
 
 export interface AppState {

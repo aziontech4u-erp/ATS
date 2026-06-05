@@ -370,8 +370,41 @@ function IntegrationsTab({ settings, patch }: { settings: CompanySettings; patch
     { label: 'HR Systems', cat: 'hr' },
     { label: 'Storage',    cat: 'storage' }
   ];
+  const webhook = settings.intakeWebhook || { url: '', enabled: false };
+  function setWebhook(next: Partial<typeof webhook>) {
+    patch({ ...settings, intakeWebhook: { ...webhook, ...next } }, 'updated_intake_webhook', '');
+  }
   return (
     <>
+      <Card title="Candidate Intake Webhook">
+        <p className="mb-3 text-[11px] leading-relaxed text-slate-500 dark:text-slate-400">
+          When the public intake form is submitted, the ATS will POST a JSON payload to this URL so n8n,
+          Zapier, or your own automation can pick it up. Leave disabled to skip the call.
+        </p>
+        <div className="grid grid-cols-12 gap-2 items-center">
+          <label className="col-span-12 sm:col-span-2 text-[10px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">Webhook URL</label>
+          <input
+            value={webhook.url}
+            onChange={(e) => setWebhook({ url: e.target.value })}
+            placeholder="https://n8n.example.com/webhook/ats-intake"
+            className="col-span-12 sm:col-span-8 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs outline-none focus:border-brand-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+          />
+          <button
+            onClick={() => setWebhook({ enabled: !webhook.enabled })}
+            className={`col-span-12 sm:col-span-2 rounded-lg px-3 py-2 text-xs font-semibold ${
+              webhook.enabled
+                ? 'bg-brand-500 text-white hover:bg-brand-600'
+                : 'border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300'
+            }`}
+          >
+            {webhook.enabled ? 'Enabled' : 'Disabled'}
+          </button>
+        </div>
+        <div className="mt-2 text-[10px] text-slate-400">
+          Payload shape: <code>{`{ type:"ats.intake_submitted", company, jobId, candidate, intake }`}</code>
+        </div>
+      </Card>
+
       {groups.map((g) => (
         <Card key={g.cat} title={g.label}>
           <div className="grid grid-cols-2 gap-2">

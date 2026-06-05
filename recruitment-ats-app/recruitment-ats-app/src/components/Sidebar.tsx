@@ -11,6 +11,7 @@ import {
   Settings,
   Sparkles,
   Building2,
+  Inbox,
   Sun,
   Moon,
   Globe,
@@ -26,6 +27,8 @@ interface SidebarProps {
   jobCount: number;
   interviewCount: number;
   offerCount: number;
+  mailUnread: number;
+  calendarToday: number;
   apiKeyConnected: boolean;
   onToggleSettings: () => void;
 }
@@ -34,17 +37,19 @@ interface NavItem {
   view: AppView;
   i18nKey: string;
   icon: any;
-  badge?: 'candidates' | 'jobs' | 'interviews' | 'offers';
+  badge?: 'candidates' | 'jobs' | 'interviews' | 'offers' | 'mail' | 'calendar';
 }
 
 const navItems: NavItem[] = [
   { view: 'dashboard', i18nKey: 'nav.dashboard', icon: LayoutDashboard },
   { view: 'parser', i18nKey: 'nav.parser', icon: ScanLine },
+  { view: 'mail', i18nKey: 'nav.mail', icon: Inbox, badge: 'mail' },
   { view: 'candidates', i18nKey: 'nav.candidates', icon: Users, badge: 'candidates' },
   { view: 'search', i18nKey: 'nav.search', icon: Search },
   { view: 'jobs', i18nKey: 'nav.jobs', icon: Briefcase, badge: 'jobs' },
   { view: 'pipeline', i18nKey: 'nav.pipeline', icon: GitBranch },
   { view: 'interviews', i18nKey: 'nav.interviews', icon: Calendar, badge: 'interviews' },
+  { view: 'calendar', i18nKey: 'nav.calendar', icon: Calendar, badge: 'calendar' },
   { view: 'offers', i18nKey: 'nav.offers', icon: FileSignature, badge: 'offers' },
   { view: 'reports', i18nKey: 'nav.reports', icon: BarChart3 },
   { view: 'company', i18nKey: 'nav.company', icon: Building2 }
@@ -57,15 +62,19 @@ export default function Sidebar({
   jobCount,
   interviewCount,
   offerCount,
+  mailUnread,
+  calendarToday,
   apiKeyConnected,
   onToggleSettings
 }: SidebarProps) {
   const { t, theme, toggleTheme, lang, setLang, user, signOut } = useUi();
-  const counts = {
+  const counts: Record<string, number> = {
     candidates: candidateCount,
     jobs: jobCount,
     interviews: interviewCount,
-    offers: offerCount
+    offers: offerCount,
+    mail: mailUnread,
+    calendar: calendarToday
   };
 
   return (

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import Sidebar from './components/Sidebar';
 import Dashboard from './components/Dashboard';
 import ResumeParserView from './components/ResumeParserView';
@@ -13,6 +13,10 @@ import SettingsModal from './components/SettingsModal';
 import LoginView from './components/LoginView';
 import CompanySettingsView from './components/CompanySettingsView';
 import IntakeFormView from './components/IntakeFormView';
+import MailInboxView from './components/MailInboxView';
+import CalendarView from './components/CalendarView';
+import { loadMail } from './lib/mailbox';
+import { loadReminders, buildEvents, countToday } from './lib/calendar';
 import Toast, { type ToastMessage } from './components/Toast';
 import {
   loadState, saveState, loadApiKey, saveApiKey, uid
@@ -33,6 +37,8 @@ export default function App() {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
   const [loaded, setLoaded] = useState(false);
+  // Refresh counter — bump when mail/calendar storage changes so sidebar badges recompute.
+  const [mailCounterTick, setMailCounterTick] = useState(0);
 
   const { user } = useUi();
 
@@ -63,6 +69,19 @@ export default function App() {
       saveState({ candidates, jobs, interviews, offers });
     }
   }, [candidates, jobs, interviews, offers, loaded]);
+
+  // ── Sidebar badge counts (mail + calendar) ──
+  // Recomputes when the user navigates (cheap) or when MailInbox / Calendar bumps the tick.
+  const mailUnread = useMemo(() => {
+    return loadMail().filter((m) => m.status === 'unprocessed').length;
+  }, [mailCounterTick, activeView]);
+
+  const calendarToday = useMemo(() => {
+    const events = buildEvents(loadReminders(), interviews);
+    return countToday(events);
+  }, [mailCounterTick, activeView, interviews]);
+
+  const bumpBadges = useCallback(() => setMailCounterTick((t) => t + 1), []);
 
   // ── Toast helper ──
   const showToast = useCallback(
@@ -144,11 +163,13 @@ export default function App() {
     <div className="flex h-screen bg-slate-50 dark:bg-slate-950">
       <Sidebar
         activeView={activeView}
-        onNavigate={setActiveView}
+        onNavigate={(v) => { setActiveView(v); bumpBadges(); }}
         candidateCount={candidates.length}
         jobCount={jobs.length}
         interviewCount={interviews.filter((i) => i.status === 'scheduled').length}
         offerCount={offers.filter((o) => o.status === 'sent').length}
+        mailUnread={mailUnread}
+        calendarToday={calendarToday}
         apiKeyConnected={!!apiKey}
         onToggleSettings={() => setSettingsOpen(true)}
       />
@@ -237,6 +258,22 @@ export default function App() {
             jobs={jobs}
             interviews={interviews}
             offers={offers}
+          />
+        )}
+        {activeView === 'mail' && (
+          <MailInboxView
+            candidates={candidates}
+            jobs={jobs}
+            onAddCandidate={(c) => { addCandidate(c); bumpBadges(); }}
+            onUpdateCandidate={updateCandidate}
+            onToast={showToast}
+          />
+        )}
+        {activeView === 'calendar' && (
+          <CalendarView
+            candidates={candidates}
+            jobs={jobs}
+            interviews={interviews}
           />
         )}
         {activeView === 'company' && (

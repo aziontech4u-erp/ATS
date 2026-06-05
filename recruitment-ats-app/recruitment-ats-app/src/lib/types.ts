@@ -177,14 +177,64 @@ export interface OfferLetter {
 export type AppView =
   | 'dashboard'
   | 'parser'
+  | 'mail'
   | 'candidates'
   | 'search'
   | 'jobs'
   | 'pipeline'
   | 'interviews'
+  | 'calendar'
   | 'offers'
   | 'reports'
   | 'company';
+
+// ─── Mail Inbox ────────────────────────────────────────────────
+
+export type MailStatus = 'unprocessed' | 'processed' | 'ignored';
+
+export interface MailAttachment {
+  filename: string;
+  mime: string;
+  // Base64-encoded content (without data: prefix). Empty for placeholder rows.
+  data: string;
+  sizeBytes: number;
+}
+
+export interface MailItem {
+  id: string;
+  fromName: string;
+  fromEmail: string;
+  subject: string;
+  /** ISO timestamp the mail was received. */
+  receivedAt: string;
+  body: string;
+  attachments: MailAttachment[];
+  status: MailStatus;
+  /** Candidate id created from this mail's attachment (if processed). */
+  candidateId?: string;
+  /** True when the mail was created from a forwarded .eml file. */
+  fromEml?: boolean;
+}
+
+// ─── Calendar ──────────────────────────────────────────────────
+
+export type CalendarReminderKind = 'reminder' | 'follow_up' | 'task' | 'other';
+
+export interface CalendarReminder {
+  id: string;
+  title: string;
+  /** ISO date (YYYY-MM-DD). Time is stored separately so all-day reminders work. */
+  date: string;
+  /** HH:mm or empty for all-day. */
+  time: string;
+  notes: string;
+  kind: CalendarReminderKind;
+  candidateId?: string;
+  jobId?: string;
+  /** ISO timestamp it was created. */
+  createdAt: string;
+  done: boolean;
+}
 
 export interface CompanyProfile {
   name: string;

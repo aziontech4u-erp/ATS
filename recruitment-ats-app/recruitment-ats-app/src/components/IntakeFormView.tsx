@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import {
   Sparkles, Send, CheckCircle2, AlertCircle, Moon, Sun, Globe,
-  Mail, Phone, Globe2
+  Mail, MessageCircle, Globe2
 } from 'lucide-react';
 import { loadState, saveState, uid } from '../lib/storage';
 import {
@@ -54,6 +54,7 @@ export default function IntakeFormView() {
   initial.applyingFor = params.applyingFor || job?.title || '';
   const [data, setData] = useState<IntakeData>(initial);
   const [skillsRaw, setSkillsRaw] = useState('');
+  const [totalExpRaw, setTotalExpRaw] = useState(''); // string buffer so empty is caught by `required`
   const [submitting, setSubmitting] = useState(false);
   const [done, setDone] = useState(false);
   const [err, setErr] = useState<string | null>(null);
@@ -65,14 +66,23 @@ export default function IntakeFormView() {
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     setErr(null);
-    if (!fullName.trim() || !email.trim()) {
-      setErr('Name and email are required.');
-      return;
-    }
+    // All fields mandatory
     if (!data.applyingFor.trim()) { setErr('Applying Job for is required.'); return; }
+    if (!data.availability.trim()) { setErr('Availability is required.'); return; }
+    if (!fullName.trim()) { setErr('Full Name is required.'); return; }
+    if (!email.trim()) { setErr('Email is required.'); return; }
+    if (!phone.trim()) { setErr('Phone (WhatsApp) is required.'); return; }
+    if (!data.currentLocation.trim()) { setErr('Current Location is required.'); return; }
     if (!data.gender) { setErr('Gender is required.'); return; }
     if (!data.nationality.trim()) { setErr('Nationality is required.'); return; }
-    if (!data.availability.trim()) { setErr('Availability is required.'); return; }
+    if (!data.currentSalary.trim()) { setErr('Current Salary is required.'); return; }
+    if (!data.expectedSalary.trim()) { setErr('Expected Salary is required.'); return; }
+    if (!totalExpRaw.trim() || isNaN(parseInt(totalExpRaw)) || parseInt(totalExpRaw) < 0) {
+      setErr('Total Experience (years) is required.'); return;
+    }
+    if (!data.noticePeriod) { setErr('Notice Period is required.'); return; }
+    const parsedSkills = skillsRaw.split(',').map((s) => s.trim()).filter(Boolean);
+    if (parsedSkills.length === 0) { setErr('Please enter at least one skill.'); return; }
     if (!data.confirmRelocateOman || !data.confirmGccExperience || !data.confirmValidPassport) {
       setErr('All three confirmation items are required.');
       return;
@@ -82,7 +92,8 @@ export default function IntakeFormView() {
       ...data,
       submittedAt: new Date().toISOString(),
       source: 'intake_form',
-      skills: skillsRaw.split(',').map((s) => s.trim()).filter(Boolean)
+      totalExperienceYears: parseInt(totalExpRaw) || 0,
+      skills: parsedSkills
     };
 
     // 1. Persist into localStorage candidate record
@@ -275,8 +286,8 @@ export default function IntakeFormView() {
             <Grid>
               <Field label="Full Name *"><Input value={fullName} onChange={setFullName} placeholder="Full Name" required /></Field>
               <Field label="Email *"><Input value={email} onChange={setEmail} type="email" placeholder="name@example.com" required /></Field>
-              <Field label="Phone (WhatsApp)"><Input value={phone} onChange={setPhone} placeholder="+968 ..." /></Field>
-              <Field label="Current Location"><Input value={data.currentLocation} onChange={(v) => set('currentLocation', v)} placeholder="City, Country" /></Field>
+              <Field label="Phone (WhatsApp) *"><Input value={phone} onChange={setPhone} placeholder="+968 ..." required /></Field>
+              <Field label="Current Location *"><Input value={data.currentLocation} onChange={(v) => set('currentLocation', v)} placeholder="City, Country" required /></Field>
             </Grid>
           </Section>
 
@@ -298,18 +309,18 @@ export default function IntakeFormView() {
 
           <Section title="Compensation">
             <Grid>
-              <Field label="Current Salary"><Input value={data.currentSalary} onChange={(v) => set('currentSalary', v)} placeholder="OMR 800" /></Field>
-              <Field label="Expected Salary"><Input value={data.expectedSalary} onChange={(v) => set('expectedSalary', v)} placeholder="OMR 1200" /></Field>
+              <Field label="Current Salary *"><Input value={data.currentSalary} onChange={(v) => set('currentSalary', v)} placeholder="OMR 800" required /></Field>
+              <Field label="Expected Salary *"><Input value={data.expectedSalary} onChange={(v) => set('expectedSalary', v)} placeholder="OMR 1200" required /></Field>
             </Grid>
           </Section>
 
           <Section title="Experience">
             <Grid>
-              <Field label="Total Experience (years)">
-                <Input value={String(data.totalExperienceYears)} onChange={(v) => set('totalExperienceYears', parseInt(v) || 0)} type="number" />
+              <Field label="Total Experience (years) *">
+                <Input value={totalExpRaw} onChange={setTotalExpRaw} type="number" placeholder="e.g. 5" required />
               </Field>
-              <Field label="Notice Period">
-                <Select value={data.noticePeriod} onChange={(v) => set('noticePeriod', v as NoticePeriod)}>
+              <Field label="Notice Period *">
+                <Select value={data.noticePeriod} onChange={(v) => set('noticePeriod', v as NoticePeriod)} required>
                   <option value="">— Select —</option>
                   <option value="immediate">Immediate</option>
                   <option value="15_days">15 days</option>
@@ -318,8 +329,8 @@ export default function IntakeFormView() {
                   <option value="90_days">90 days</option>
                 </Select>
               </Field>
-              <Field label="Skills (comma separated)">
-                <Input value={skillsRaw} onChange={setSkillsRaw} placeholder="React, Node.js, SQL, Banking, Audit" />
+              <Field label="Skills (comma separated) *">
+                <Input value={skillsRaw} onChange={setSkillsRaw} placeholder="React, Node.js, SQL, Banking, Audit" required />
               </Field>
             </Grid>
           </Section>
@@ -371,13 +382,28 @@ export default function IntakeFormView() {
         {/* Footer with company contact */}
         <div className="border-t border-slate-100 bg-slate-50 px-6 py-4 dark:border-slate-800 dark:bg-slate-900/60">
           <div className="grid grid-cols-1 gap-2 text-[11px] text-slate-600 sm:grid-cols-3 dark:text-slate-300">
-            <a href={`mailto:${companyEmail}`} className="flex items-center gap-1.5 hover:text-brand-500 dark:hover:text-blue-300">
+            <a
+              href={`mailto:${companyEmail}`}
+              className="flex items-center gap-1.5 hover:text-brand-500 dark:hover:text-blue-300"
+            >
               <Mail size={11} /> {companyEmail}
             </a>
-            <a href={`https://wa.me/${companyPhone.replace(/\D/g, '')}`} target="_blank" rel="noreferrer" className="flex items-center gap-1.5 hover:text-brand-500 dark:hover:text-blue-300">
-              <Phone size={11} /> {companyPhone}
+            <a
+              href={`https://wa.me/${(companyPhone || '').replace(/\D/g, '') || '96897892123'}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              title="Chat on WhatsApp"
+              className="flex items-center gap-1.5 font-semibold text-[#25D366] hover:opacity-80"
+            >
+              <MessageCircle size={11} fill="currentColor" /> {companyPhone}
+              <span className="rounded-full bg-[#25D366]/15 px-1.5 py-px text-[9px] uppercase tracking-wider">WhatsApp</span>
             </a>
-            <a href={companyWebsite.startsWith('http') ? companyWebsite : `https://${companyWebsite}`} target="_blank" rel="noreferrer" className="flex items-center gap-1.5 hover:text-brand-500 dark:hover:text-blue-300">
+            <a
+              href={companyWebsite.startsWith('http') ? companyWebsite : `https://${companyWebsite}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-1.5 hover:text-brand-500 dark:hover:text-blue-300"
+            >
               <Globe2 size={11} /> {companyWebsite}
             </a>
           </div>

@@ -91,17 +91,19 @@ export type NoticePeriod = '' | 'immediate' | '15_days' | '30_days' | '60_days' 
 export interface IntakeData {
   submittedAt: string;             // ISO timestamp
   source: 'intake_form' | 'webhook' | 'manual';
+  applyingFor: string;             // Job title the candidate is applying for
+  gender: string;                  // Male / Female / Other
+  nationality: string;
   currentSalary: string;
   expectedSalary: string;
   noticePeriod: NoticePeriod;
   totalExperienceYears: number;
-  relevantExperienceYears: number;
-  willingToRelocate: boolean;
-  preferredLocations: string;      // comma-separated
   currentLocation: string;
-  visaStatus: string;
   skills: string[];                // free-form multi-skill
   availability: string;            // e.g. "Weekdays after 5pm"
+  confirmRelocateOman: boolean;    // Willing to relocate to OMAN / Muscat
+  confirmGccExperience: boolean;   // GCC / Middle East working experience
+  confirmValidPassport: boolean;   // Holds a valid passport
 }
 
 export interface Candidate extends ParsedResume {

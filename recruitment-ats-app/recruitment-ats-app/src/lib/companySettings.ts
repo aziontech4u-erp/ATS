@@ -6,15 +6,15 @@ const KEY = 'recruitment_ats_company_v1';
 export function defaultCompanySettings(): CompanySettings {
   return {
     profile: {
-      name: 'Acme Recruitment',
-      legalName: 'Acme Recruitment LLC',
+      name: 'ZIONTECH',
+      legalName: 'ZIONTECH',
       industry: 'Staffing & Recruiting',
       size: '11-50',
-      website: '',
-      email: '',
-      phone: '',
+      website: 'www.zionteck.com',
+      email: 'admin@zionteck.com',
+      phone: '+968 9789 2123',
       addressLine: '',
-      city: '',
+      city: 'Muscat',
       country: 'Oman',
       taxId: '',
       logoDataUrl: ''

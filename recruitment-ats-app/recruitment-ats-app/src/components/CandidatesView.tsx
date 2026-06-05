@@ -1541,16 +1541,23 @@ function IntakeTab({
         <div className="rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-900">
           <div className="mb-3 text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Submitted Profile</div>
           <div className="grid grid-cols-2 gap-3 text-xs">
+            <KeyVal k="Applying Job for" v={draft.intake!.applyingFor} />
+            <KeyVal k="Availability" v={draft.intake!.availability} />
+            <KeyVal k="Gender" v={draft.intake!.gender} />
+            <KeyVal k="Nationality" v={draft.intake!.nationality} />
             <KeyVal k="Current Salary" v={draft.intake!.currentSalary} />
             <KeyVal k="Expected Salary" v={draft.intake!.expectedSalary} />
             <KeyVal k="Notice Period" v={draft.intake!.noticePeriod ? draft.intake!.noticePeriod.replace('_', ' ') : ''} />
-            <KeyVal k="Availability" v={draft.intake!.availability} />
             <KeyVal k="Total Exp (yrs)" v={String(draft.intake!.totalExperienceYears)} />
-            <KeyVal k="Relevant Exp (yrs)" v={String(draft.intake!.relevantExperienceYears)} />
             <KeyVal k="Current Location" v={draft.intake!.currentLocation} />
-            <KeyVal k="Visa Status" v={draft.intake!.visaStatus} />
-            <KeyVal k="Willing to Relocate" v={draft.intake!.willingToRelocate ? 'Yes' : 'No'} />
-            <KeyVal k="Preferred Locations" v={draft.intake!.preferredLocations} />
+          </div>
+          <div className="mt-3">
+            <div className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">Confirmation</div>
+            <div className="space-y-1 text-xs">
+              <ConfirmRow ok={draft.intake!.confirmRelocateOman} label="Willing to relocate to OMAN / Muscat" />
+              <ConfirmRow ok={draft.intake!.confirmGccExperience} label="GCC / Middle East Working Experience" />
+              <ConfirmRow ok={draft.intake!.confirmValidPassport} label="Valid Passport" />
+            </div>
           </div>
           {draft.intake!.skills.length > 0 && (
             <div className="mt-3">
@@ -1614,6 +1621,16 @@ function KeyVal({ k, v }: { k: string; v: string }) {
       <div className="rounded-md bg-slate-50 px-2.5 py-1.5 text-xs text-slate-800 dark:bg-slate-800 dark:text-slate-100 min-h-[28px]">
         {v || <span className="text-slate-400">—</span>}
       </div>
+    </div>
+  );
+}
+
+function ConfirmRow({ ok, label }: { ok: boolean; label: string }) {
+  return (
+    <div className={`flex items-center gap-2 rounded-md px-2.5 py-1 ${ok ? 'bg-green-50 text-green-800 dark:bg-green-900/30 dark:text-green-300' : 'bg-rose-50 text-rose-700 dark:bg-rose-900/30 dark:text-rose-300'}`}>
+      {ok ? <CheckCircle2 size={12} /> : <AlertTriangle size={12} />}
+      <span className="font-medium">{label}</span>
+      <span className="ms-auto text-[10px] font-bold uppercase">{ok ? 'Yes' : 'No'}</span>
     </div>
   );
 }

@@ -37,7 +37,11 @@ export default function App() {
   const { user } = useUi();
 
   // ── Public intake form route (no auth required) ──
-  const isIntake = typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('intake') === '1';
+  // Triggers: ?intake=1  OR  path ends with /ats-jobform
+  const isIntake = typeof window !== 'undefined' && (
+    new URLSearchParams(window.location.search).get('intake') === '1' ||
+    /\/ats-jobform\/?$/.test(window.location.pathname)
+  );
   if (isIntake) {
     return <IntakeFormView />;
   }

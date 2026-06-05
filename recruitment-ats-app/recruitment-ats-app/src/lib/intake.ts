@@ -6,31 +6,41 @@ export function emptyIntake(): IntakeData {
   return {
     submittedAt: '',
     source: 'intake_form',
+    applyingFor: '',
+    gender: '',
+    nationality: '',
     currentSalary: '',
     expectedSalary: '',
     noticePeriod: '',
     totalExperienceYears: 0,
-    relevantExperienceYears: 0,
-    willingToRelocate: false,
-    preferredLocations: '',
     currentLocation: '',
-    visaStatus: '',
     skills: [],
-    availability: ''
+    availability: '',
+    confirmRelocateOman: false,
+    confirmGccExperience: false,
+    confirmValidPassport: false
   };
 }
 
 /**
  * Build a public pre-filled intake URL relative to the current app origin.
+ * Prefers the clean /ats-jobform path; falls back to ?intake=1 on the root
+ * when running locally (e.g. dev server at http://localhost:5174/).
  * `extra` is an arbitrary key→value map appended as URL params (email, name, jobId, token, …).
  */
 export function buildIntakeUrl(extra: Record<string, string | undefined>): string {
-  const base = `${window.location.origin}${window.location.pathname.replace(/\/$/, '')}/`;
-  const params = new URLSearchParams({ intake: '1' });
+  const origin = window.location.origin;
+  const params = new URLSearchParams();
   Object.entries(extra).forEach(([k, v]) => {
     if (v) params.set(k, v);
   });
-  return `${base}?${params.toString()}`;
+  // Dev / local: keep ?intake=1 because Vite's dev server doesn't SPA-fallback custom paths.
+  const isLocal = /^https?:\/\/(localhost|127\.0\.0\.1)/.test(origin);
+  if (isLocal) {
+    params.set('intake', '1');
+    return `${origin}/?${params.toString()}`;
+  }
+  return `${origin}/ats-jobform${params.toString() ? '?' + params.toString() : ''}`;
 }
 
 /** WhatsApp deep-link with an editable message template. */
@@ -116,7 +126,7 @@ export function pushPendingIntake(p: PendingIntake) {
 // ─── screening flags ───────────────────────────────────────────────
 
 export interface ScreeningFlag {
-  id: 'salary_above_max' | 'long_notice' | 'no_relocate' | 'no_visa';
+  id: 'salary_above_max' | 'long_notice' | 'no_relocate' | 'no_passport' | 'no_gcc_exp';
   level: 'info' | 'warn' | 'block';
   label: string;
 }
@@ -154,19 +164,25 @@ export function computeScreeningFlags(c: Candidate, jobs: JobPosting[]): Screeni
       label: `Long notice (${noticeDays}d) — low priority`
     });
   }
-  if (!intake.willingToRelocate) {
+  if (!intake.confirmRelocateOman) {
     flags.push({
       id: 'no_relocate',
       level: 'info',
-      label: 'Not willing to relocate'
+      label: 'Not willing to relocate to Oman'
     });
   }
-  if (intake.visaStatus.toLowerCase().includes('not eligible') ||
-      intake.visaStatus.toLowerCase().includes('no visa')) {
+  if (!intake.confirmValidPassport) {
     flags.push({
-      id: 'no_visa',
+      id: 'no_passport',
       level: 'block',
-      label: `Visa: ${intake.visaStatus}`
+      label: 'No valid passport'
+    });
+  }
+  if (!intake.confirmGccExperience) {
+    flags.push({
+      id: 'no_gcc_exp',
+      level: 'info',
+      label: 'No GCC / Middle East experience'
     });
   }
   return flags;
@@ -179,7 +195,9 @@ export function buildIntakeSummary(c: Candidate, jobs: JobPosting[]): string[] {
   const i = c.intake;
   if (!i) return ['No intake data submitted yet.'];
   const job = jobs.find((j) => j.id === c.jobId);
-  lines.push(`Total experience: ${i.totalExperienceYears} yrs (relevant: ${i.relevantExperienceYears} yrs).`);
+  if (i.applyingFor) lines.push(`Applying for: ${i.applyingFor}.`);
+  if (i.nationality) lines.push(`Nationality: ${i.nationality}${i.gender ? ' · ' + i.gender : ''}.`);
+  lines.push(`Total experience: ${i.totalExperienceYears} yrs.`);
   if (i.currentSalary) lines.push(`Current salary: ${i.currentSalary}.`);
   if (i.expectedSalary) {
     const expected = parseSalary(i.expectedSalary);
@@ -191,8 +209,11 @@ export function buildIntakeSummary(c: Candidate, jobs: JobPosting[]): string[] {
     }
   }
   if (i.noticePeriod) lines.push(`Notice: ${i.noticePeriod.replace('_', ' ')}.`);
-  if (i.visaStatus) lines.push(`Visa: ${i.visaStatus}.`);
-  lines.push(i.willingToRelocate ? `Willing to relocate${i.preferredLocations ? ' (prefers ' + i.preferredLocations + ')' : ''}.` : 'Not willing to relocate.');
+  const confirms: string[] = [];
+  confirms.push(i.confirmRelocateOman ? '✓ Will relocate to Oman' : '✗ Will not relocate');
+  confirms.push(i.confirmGccExperience ? '✓ GCC experience' : '✗ No GCC experience');
+  confirms.push(i.confirmValidPassport ? '✓ Valid passport' : '✗ No valid passport');
+  lines.push(confirms.join(' · '));
   if (i.skills.length > 0) lines.push(`Skills: ${i.skills.slice(0, 6).join(', ')}${i.skills.length > 6 ? '…' : ''}.`);
   return lines;
 }

@@ -1,5 +1,8 @@
 import { useMemo, useState } from 'react';
-import { Sparkles, Send, CheckCircle2, AlertCircle, Moon, Sun, Globe } from 'lucide-react';
+import {
+  Sparkles, Send, CheckCircle2, AlertCircle, Moon, Sun, Globe,
+  Mail, Phone, Globe2
+} from 'lucide-react';
 import { loadState, saveState, uid } from '../lib/storage';
 import {
   emptyIntake, findCandidateByContact, pushPendingIntake
@@ -9,8 +12,8 @@ import type { Candidate, IntakeData, NoticePeriod } from '../lib/types';
 import { useUi } from '../lib/uiContext';
 
 /**
- * Public intake form. Rendered when the URL has ?intake=1.
- * Reads pre-fill params from query string: email, name, phone, jobId.
+ * Public intake form. Rendered when the URL has ?intake=1 or path /ats-jobform.
+ * Reads pre-fill params from query string: email, name, phone, jobId, applyingFor.
  * On submit:
  *   1. Updates / creates the matching candidate in localStorage
  *   2. POSTs to the configured webhook (if any) for n8n / Zapier
@@ -19,7 +22,10 @@ import { useUi } from '../lib/uiContext';
 export default function IntakeFormView() {
   const { theme, toggleTheme, lang, setLang } = useUi();
   const company = useMemo(() => loadCompanySettings(), []);
-  const companyName = company.profile.name || 'Our Company';
+  const companyName = company.profile.name || 'ZIONTECH';
+  const companyEmail = company.profile.email || 'admin@zionteck.com';
+  const companyPhone = company.profile.phone || '+968 9789 2123';
+  const companyWebsite = company.profile.website || 'www.zionteck.com';
   const logo = company.profile.logoDataUrl;
 
   // Pre-fill from URL
@@ -30,6 +36,7 @@ export default function IntakeFormView() {
       name: sp.get('name') || '',
       phone: sp.get('phone') || '',
       jobId: sp.get('jobId') || '',
+      applyingFor: sp.get('applyingFor') || '',
       token: sp.get('token') || ''
     };
   }, []);
@@ -43,7 +50,9 @@ export default function IntakeFormView() {
   const [fullName, setFullName] = useState(params.name);
   const [email, setEmail] = useState(params.email);
   const [phone, setPhone] = useState(params.phone);
-  const [data, setData] = useState<IntakeData>(emptyIntake());
+  const initial = emptyIntake();
+  initial.applyingFor = params.applyingFor || job?.title || '';
+  const [data, setData] = useState<IntakeData>(initial);
   const [skillsRaw, setSkillsRaw] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [done, setDone] = useState(false);
@@ -58,6 +67,14 @@ export default function IntakeFormView() {
     setErr(null);
     if (!fullName.trim() || !email.trim()) {
       setErr('Name and email are required.');
+      return;
+    }
+    if (!data.applyingFor.trim()) { setErr('Applying Job for is required.'); return; }
+    if (!data.gender) { setErr('Gender is required.'); return; }
+    if (!data.nationality.trim()) { setErr('Nationality is required.'); return; }
+    if (!data.availability.trim()) { setErr('Availability is required.'); return; }
+    if (!data.confirmRelocateOman || !data.confirmGccExperience || !data.confirmValidPassport) {
+      setErr('All three confirmation items are required.');
       return;
     }
     setSubmitting(true);
@@ -80,13 +97,14 @@ export default function IntakeFormView() {
             full_name: existing.personal.full_name || fullName,
             email: existing.personal.email || email,
             phone: existing.personal.phone || phone,
-            location: existing.personal.location || intake.currentLocation
+            location: existing.personal.location || intake.currentLocation,
+            nationality: existing.personal.nationality || intake.nationality,
+            gender: existing.personal.gender || intake.gender
           },
           jobId: existing.jobId || params.jobId || '',
           intake,
           notice_period: existing.notice_period || (intake.noticePeriod ? intake.noticePeriod.replace('_', ' ') : ''),
           expected_salary: existing.expected_salary || intake.expectedSalary,
-          visa_status: existing.visa_status || intake.visaStatus,
           total_experience_years: existing.total_experience_years || intake.totalExperienceYears,
           skills: {
             ...existing.skills,
@@ -111,13 +129,13 @@ export default function IntakeFormView() {
             location: intake.currentLocation,
             city: '', country: '',
             linkedin: '', website: '',
-            nationality: '',
-            gender: '',
+            nationality: intake.nationality,
+            gender: intake.gender,
             date_of_birth: '',
             marital_status: ''
           },
           professional_summary: '',
-          current_title: '',
+          current_title: intake.applyingFor,
           total_experience_years: intake.totalExperienceYears,
           skills: { technical: intake.skills, soft: [], languages: [], tools: [], certifications: [] },
           work_experience: [],
@@ -127,7 +145,7 @@ export default function IntakeFormView() {
           awards: [],
           publications: [],
           volunteer: [],
-          visa_status: intake.visaStatus,
+          visa_status: '',
           notice_period: intake.noticePeriod ? intake.noticePeriod.replace('_', ' ') : '',
           expected_salary: intake.expectedSalary,
           ai_score: 60,
@@ -186,7 +204,7 @@ export default function IntakeFormView() {
           </div>
           <h1 className="mb-1 text-lg font-bold text-slate-900 dark:text-slate-100">Profile Submitted</h1>
           <p className="text-sm text-slate-600 dark:text-slate-300">
-            Thanks {fullName.split(' ')[0] || ''} — your details have been received. The recruitment team will review and reach out shortly.
+            Thanks {fullName.split(' ')[0] || ''} — your details have been received. The {companyName} recruitment team will review and reach out shortly.
           </p>
         </div>
       </div>
@@ -228,26 +246,53 @@ export default function IntakeFormView() {
             )}
             <div>
               <h1 className="text-base font-bold text-slate-900 dark:text-slate-100">
-                {companyName} — Candidate Intake
+                {companyName} [ATS] - Job Form
               </h1>
               <div className="flex items-center gap-1 text-[11px] uppercase tracking-wider text-slate-400 font-semibold">
-                <Sparkles size={10} /> Complete your profile{job ? ` for ${job.title}` : ''}
+                <Sparkles size={10} /> Complete your application{job ? ` for ${job.title}` : ''}
               </div>
             </div>
           </div>
           <p className="mt-3 text-[12px] leading-relaxed text-slate-500 dark:text-slate-400">
             This information helps us match you faster with the right opportunity. Profiles with complete
-            details are prioritised for shortlisting.
+            details are prioritised for shortlisting. Fields marked <span className="text-rose-500 font-semibold">*</span> are required.
           </p>
         </div>
 
         <div className="space-y-6 p-6">
+          <Section title="Position">
+            <Grid>
+              <Field label="Applying Job for *">
+                <Input value={data.applyingFor} onChange={(v) => set('applyingFor', v)} placeholder="e.g. Senior Banking Officer" required />
+              </Field>
+              <Field label="Availability for Interview *">
+                <Input value={data.availability} onChange={(v) => set('availability', v)} placeholder="Weekdays after 5pm" required />
+              </Field>
+            </Grid>
+          </Section>
+
           <Section title="Contact">
             <Grid>
               <Field label="Full Name *"><Input value={fullName} onChange={setFullName} placeholder="Full Name" required /></Field>
               <Field label="Email *"><Input value={email} onChange={setEmail} type="email" placeholder="name@example.com" required /></Field>
               <Field label="Phone (WhatsApp)"><Input value={phone} onChange={setPhone} placeholder="+968 ..." /></Field>
               <Field label="Current Location"><Input value={data.currentLocation} onChange={(v) => set('currentLocation', v)} placeholder="City, Country" /></Field>
+            </Grid>
+          </Section>
+
+          <Section title="Personal">
+            <Grid>
+              <Field label="Gender *">
+                <Select value={data.gender} onChange={(v) => set('gender', v)} required>
+                  <option value="">— Select —</option>
+                  <option value="Male">Male</option>
+                  <option value="Female">Female</option>
+                  <option value="Other">Other</option>
+                </Select>
+              </Field>
+              <Field label="Nationality *">
+                <Input value={data.nationality} onChange={(v) => set('nationality', v)} placeholder="e.g. Indian / Omani / Filipino" required />
+              </Field>
             </Grid>
           </Section>
 
@@ -258,8 +303,11 @@ export default function IntakeFormView() {
             </Grid>
           </Section>
 
-          <Section title="Availability">
+          <Section title="Experience">
             <Grid>
+              <Field label="Total Experience (years)">
+                <Input value={String(data.totalExperienceYears)} onChange={(v) => set('totalExperienceYears', parseInt(v) || 0)} type="number" />
+              </Field>
               <Field label="Notice Period">
                 <Select value={data.noticePeriod} onChange={(v) => set('noticePeriod', v as NoticePeriod)}>
                   <option value="">— Select —</option>
@@ -270,41 +318,33 @@ export default function IntakeFormView() {
                   <option value="90_days">90 days</option>
                 </Select>
               </Field>
-              <Field label="Availability for Interview">
-                <Input value={data.availability} onChange={(v) => set('availability', v)} placeholder="Weekdays after 5pm" />
-              </Field>
-            </Grid>
-          </Section>
-
-          <Section title="Experience">
-            <Grid>
-              <Field label="Total Experience (years)">
-                <Input value={String(data.totalExperienceYears)} onChange={(v) => set('totalExperienceYears', parseInt(v) || 0)} type="number" />
-              </Field>
-              <Field label="Relevant Experience (years)">
-                <Input value={String(data.relevantExperienceYears)} onChange={(v) => set('relevantExperienceYears', parseInt(v) || 0)} type="number" />
-              </Field>
-              <Field label="Visa Status">
-                <Input value={data.visaStatus} onChange={(v) => set('visaStatus', v)} placeholder="e.g. Resident / Sponsored / Free Visa / Not eligible" />
-              </Field>
               <Field label="Skills (comma separated)">
                 <Input value={skillsRaw} onChange={setSkillsRaw} placeholder="React, Node.js, SQL, Banking, Audit" />
               </Field>
             </Grid>
           </Section>
 
-          <Section title="Relocation">
-            <Grid>
-              <Field label="Willing to Relocate?">
-                <Select value={data.willingToRelocate ? 'yes' : 'no'} onChange={(v) => set('willingToRelocate', v === 'yes')}>
-                  <option value="no">No</option>
-                  <option value="yes">Yes</option>
-                </Select>
-              </Field>
-              <Field label="Preferred Locations">
-                <Input value={data.preferredLocations} onChange={(v) => set('preferredLocations', v)} placeholder="Muscat, Salalah, Remote" />
-              </Field>
-            </Grid>
+          <Section title="Confirmation *">
+            <div className="space-y-2 rounded-lg border border-slate-200 bg-slate-50 p-3 dark:border-slate-700 dark:bg-slate-800/50">
+              <p className="mb-1 text-[11px] text-slate-500 dark:text-slate-400">
+                Please confirm the following. All three are required.
+              </p>
+              <ConfirmCheckbox
+                checked={data.confirmRelocateOman}
+                onChange={(v) => set('confirmRelocateOman', v)}
+                label="Willing to relocate to OMAN / Muscat"
+              />
+              <ConfirmCheckbox
+                checked={data.confirmGccExperience}
+                onChange={(v) => set('confirmGccExperience', v)}
+                label="GCC / Middle East Working Experience"
+              />
+              <ConfirmCheckbox
+                checked={data.confirmValidPassport}
+                onChange={(v) => set('confirmValidPassport', v)}
+                label="Valid Passport"
+              />
+            </div>
           </Section>
 
           {err && (
@@ -320,11 +360,26 @@ export default function IntakeFormView() {
             className="flex w-full items-center justify-center gap-2 rounded-lg bg-brand-500 px-4 py-3 text-sm font-semibold text-white hover:bg-brand-600 disabled:opacity-60"
           >
             <Send size={14} />
-            {submitting ? 'Submitting…' : 'Submit Profile'}
+            {submitting ? 'Submitting…' : 'Submit Application'}
           </button>
 
           <div className="text-center text-[11px] text-slate-400">
             By submitting, you agree the recruitment team may contact you about this and similar opportunities.
+          </div>
+        </div>
+
+        {/* Footer with company contact */}
+        <div className="border-t border-slate-100 bg-slate-50 px-6 py-4 dark:border-slate-800 dark:bg-slate-900/60">
+          <div className="grid grid-cols-1 gap-2 text-[11px] text-slate-600 sm:grid-cols-3 dark:text-slate-300">
+            <a href={`mailto:${companyEmail}`} className="flex items-center gap-1.5 hover:text-brand-500 dark:hover:text-blue-300">
+              <Mail size={11} /> {companyEmail}
+            </a>
+            <a href={`https://wa.me/${companyPhone.replace(/\D/g, '')}`} target="_blank" rel="noreferrer" className="flex items-center gap-1.5 hover:text-brand-500 dark:hover:text-blue-300">
+              <Phone size={11} /> {companyPhone}
+            </a>
+            <a href={companyWebsite.startsWith('http') ? companyWebsite : `https://${companyWebsite}`} target="_blank" rel="noreferrer" className="flex items-center gap-1.5 hover:text-brand-500 dark:hover:text-blue-300">
+              <Globe2 size={11} /> {companyWebsite}
+            </a>
           </div>
         </div>
       </form>
@@ -365,14 +420,29 @@ function Input(props: { value: string; onChange: (v: string) => void; type?: str
     />
   );
 }
-function Select({ value, onChange, children }: { value: string; onChange: (v: string) => void; children: React.ReactNode }) {
+function Select({ value, onChange, children, required }: { value: string; onChange: (v: string) => void; children: React.ReactNode; required?: boolean }) {
   return (
     <select
       value={value}
       onChange={(e) => onChange(e.target.value)}
+      required={required}
       className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-brand-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
     >
       {children}
     </select>
+  );
+}
+function ConfirmCheckbox({ checked, onChange, label }: { checked: boolean; onChange: (v: boolean) => void; label: string }) {
+  return (
+    <label className="flex cursor-pointer items-start gap-2 rounded-md px-2 py-1.5 text-xs hover:bg-white dark:hover:bg-slate-800/60">
+      <input
+        type="checkbox"
+        checked={checked}
+        onChange={(e) => onChange(e.target.checked)}
+        required
+        className="mt-0.5 h-4 w-4 cursor-pointer accent-brand-500"
+      />
+      <span className="text-slate-700 dark:text-slate-200">{label}</span>
+    </label>
   );
 }

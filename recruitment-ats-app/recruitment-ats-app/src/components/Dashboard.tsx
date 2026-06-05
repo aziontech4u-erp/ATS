@@ -58,12 +58,12 @@ export default function Dashboard({
     .slice(0, 10);
 
   return (
-    <div className="h-full overflow-y-auto bg-slate-50 p-5">
+    <div className="h-full overflow-y-auto bg-slate-50 p-5 dark:bg-slate-950">
       {/* Page header */}
       <div className="mb-5 flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-bold text-slate-900">Dashboard</h1>
-          <p className="text-xs text-slate-500">Recruitment overview & hiring pipeline</p>
+          <h1 className="text-xl font-bold text-slate-900 dark:text-slate-100">Dashboard</h1>
+          <p className="text-xs text-slate-500 dark:text-slate-400">Recruitment overview & hiring pipeline</p>
         </div>
         <button
           onClick={() => onNavigate('parser')}
@@ -76,15 +76,15 @@ export default function Dashboard({
 
       {/* AI Status Banner */}
       {!apiKeyConnected && (
-        <div className="mb-4 flex items-center gap-3 rounded-xl border border-amber-200 bg-gradient-to-r from-amber-50 to-orange-50 px-4 py-3">
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-amber-200 text-amber-700">
+        <div className="mb-4 flex items-center gap-3 rounded-xl border border-amber-200 bg-gradient-to-r from-amber-50 to-orange-50 px-4 py-3 dark:border-amber-900/60 dark:from-amber-900/20 dark:to-orange-900/20">
+          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-amber-200 text-amber-700 dark:bg-amber-900/50 dark:text-amber-300">
             <Sparkles size={16} />
           </div>
           <div className="flex-1">
-            <div className="text-xs font-semibold text-amber-900">
+            <div className="text-xs font-semibold text-amber-900 dark:text-amber-200">
               Unlock AI-powered resume parsing
             </div>
-            <div className="text-[11px] text-amber-700">
+            <div className="text-[11px] text-amber-700 dark:text-amber-300/80">
               Add an OpenAI or Anthropic API key in Settings to extract full candidate profiles
               automatically.
             </div>
@@ -94,15 +94,15 @@ export default function Dashboard({
 
       {/* Duplicate Alert */}
       {highConfidenceDupes.length > 0 && (
-        <div className="mb-4 flex items-center gap-3 rounded-xl border border-rose-200 bg-gradient-to-r from-rose-50 to-pink-50 px-4 py-3">
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-rose-200 text-rose-700">
+        <div className="mb-4 flex items-center gap-3 rounded-xl border border-rose-200 bg-gradient-to-r from-rose-50 to-pink-50 px-4 py-3 dark:border-rose-900/60 dark:from-rose-900/20 dark:to-pink-900/20">
+          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-rose-200 text-rose-700 dark:bg-rose-900/50 dark:text-rose-300">
             <AlertTriangle size={16} />
           </div>
           <div className="flex-1">
-            <div className="text-xs font-semibold text-rose-900">
+            <div className="text-xs font-semibold text-rose-900 dark:text-rose-200">
               {highConfidenceDupes.length} potential duplicate{highConfidenceDupes.length > 1 ? 's' : ''} detected
             </div>
-            <div className="text-[11px] text-rose-700">
+            <div className="text-[11px] text-rose-700 dark:text-rose-300/80">
               {highConfidenceDupes.slice(0, 2).map((d, i) => (
                 <span key={i}>
                   {i > 0 && ' · '}
@@ -160,14 +160,14 @@ export default function Dashboard({
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
         {/* Pipeline Stage Distribution */}
-        <div className="rounded-xl border border-blue-100 bg-white p-4 lg:col-span-2">
+        <div className="rounded-xl border border-blue-100 bg-white dark:border-slate-800 dark:bg-slate-900 p-4 lg:col-span-2">
           <div className="mb-3 flex items-center justify-between">
-            <div className="text-xs font-bold uppercase tracking-wider text-slate-600">
+            <div className="text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300">
               Hiring Pipeline
             </div>
             <button
               onClick={() => onNavigate('pipeline')}
-              className="flex items-center gap-1 text-[10px] font-semibold text-brand-500 hover:underline"
+              className="flex items-center gap-1 text-[10px] font-semibold text-brand-500 hover:underline dark:text-blue-300"
             >
               View pipeline <ArrowRight size={11} />
             </button>
@@ -194,9 +194,9 @@ export default function Dashboard({
         </div>
 
         {/* Hiring Progress */}
-        <div className="rounded-xl border border-blue-100 bg-white p-4">
+        <div className="rounded-xl border border-blue-100 bg-white dark:border-slate-800 dark:bg-slate-900 p-4">
           <div className="mb-3 flex items-center justify-between">
-            <div className="text-xs font-bold uppercase tracking-wider text-slate-600">
+            <div className="text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300">
               Hiring Progress
             </div>
             <TrendingUp size={14} className="text-green-600" />
@@ -209,17 +209,17 @@ export default function Dashboard({
         </div>
 
         {/* Top Candidates */}
-        <div className="rounded-xl border border-blue-100 bg-white p-4 lg:col-span-2">
+        <div className="rounded-xl border border-blue-100 bg-white dark:border-slate-800 dark:bg-slate-900 p-4 lg:col-span-2">
           <div className="mb-3 flex items-center justify-between">
-            <div className="text-xs font-bold uppercase tracking-wider text-slate-600">
+            <div className="text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300">
               Top Candidates by AI Score
             </div>
             <Award size={14} className="text-amber-500" />
           </div>
           {topCandidates.length === 0 ? (
-            <div className="py-8 text-center text-slate-400">
+            <div className="py-8 text-center text-slate-400 dark:text-slate-500">
               <ScanLine size={32} className="mx-auto mb-2 opacity-40" />
-              <div className="text-xs font-semibold text-slate-500">No candidates yet</div>
+              <div className="text-xs font-semibold text-slate-500 dark:text-slate-400">No candidates yet</div>
               <button
                 onClick={() => onNavigate('parser')}
                 className="mt-3 rounded-lg bg-brand-500 px-3 py-1.5 text-[11px] font-semibold text-white"
@@ -235,7 +235,7 @@ export default function Dashboard({
                   <div
                     key={c.id}
                     onClick={() => onNavigate('candidates')}
-                    className="flex cursor-pointer items-center gap-2.5 rounded-lg p-2 hover:bg-slate-50"
+                    className="flex cursor-pointer items-center gap-2.5 rounded-lg p-2 hover:bg-slate-50 dark:hover:bg-slate-800/60"
                   >
                     <div
                       className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full text-[10px] font-bold text-white"
@@ -244,10 +244,10 @@ export default function Dashboard({
                       {getInitials(c.personal.full_name)}
                     </div>
                     <div className="min-w-0 flex-1">
-                      <div className="truncate text-xs font-semibold text-slate-900">
+                      <div className="truncate text-xs font-semibold text-slate-900 dark:text-slate-100">
                         {c.personal.full_name || 'Unknown'}
                       </div>
-                      <div className="truncate text-[11px] text-slate-500">
+                      <div className="truncate text-[11px] text-slate-500 dark:text-slate-400">
                         {c.current_title || c.filename}
                       </div>
                     </div>
@@ -268,33 +268,33 @@ export default function Dashboard({
         </div>
 
         {/* Upcoming Interviews */}
-        <div className="rounded-xl border border-blue-100 bg-white p-4">
+        <div className="rounded-xl border border-blue-100 bg-white dark:border-slate-800 dark:bg-slate-900 p-4">
           <div className="mb-3 flex items-center justify-between">
-            <div className="text-xs font-bold uppercase tracking-wider text-slate-600">
+            <div className="text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300">
               Upcoming Interviews
             </div>
             <button
               onClick={() => onNavigate('interviews')}
-              className="text-[10px] font-semibold text-brand-500 hover:underline"
+              className="text-[10px] font-semibold text-brand-500 hover:underline dark:text-blue-300"
             >
               View all
             </button>
           </div>
           {upcoming.length === 0 ? (
-            <div className="py-6 text-center text-slate-400">
+            <div className="py-6 text-center text-slate-400 dark:text-slate-500">
               <Calendar size={28} className="mx-auto mb-1.5 opacity-40" />
-              <div className="text-[11px] font-semibold text-slate-500">No upcoming interviews</div>
+              <div className="text-[11px] font-semibold text-slate-500 dark:text-slate-400">No upcoming interviews</div>
             </div>
           ) : (
             <div className="space-y-1.5">
               {upcoming.slice(0, 5).map((i) => {
                 const candidate = candidates.find((c) => c.id === i.candidate_id);
                 return (
-                  <div key={i.id} className="rounded-lg bg-slate-50 p-2">
-                    <div className="text-[11px] font-semibold text-slate-900">
+                  <div key={i.id} className="rounded-lg bg-slate-50 p-2 dark:bg-slate-800/60">
+                    <div className="text-[11px] font-semibold text-slate-900 dark:text-slate-100">
                       {candidate?.personal.full_name || 'Unknown'}
                     </div>
-                    <div className="text-[10px] text-slate-500">
+                    <div className="text-[10px] text-slate-500 dark:text-slate-400">
                       {i.type} · {new Date(i.scheduled_at).toLocaleString('en-GB', {
                         day: '2-digit',
                         month: 'short',
@@ -310,20 +310,20 @@ export default function Dashboard({
         </div>
 
         {/* Top Skills Distribution */}
-        <div className="rounded-xl border border-blue-100 bg-white p-4 lg:col-span-3">
+        <div className="rounded-xl border border-blue-100 bg-white dark:border-slate-800 dark:bg-slate-900 p-4 lg:col-span-3">
           <div className="mb-3 flex items-center justify-between">
-            <div className="text-xs font-bold uppercase tracking-wider text-slate-600">
+            <div className="text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300">
               Top Skills in Talent Pool
             </div>
             <button
               onClick={() => onNavigate('search')}
-              className="flex items-center gap-1 text-[10px] font-semibold text-brand-500 hover:underline"
+              className="flex items-center gap-1 text-[10px] font-semibold text-brand-500 hover:underline dark:text-blue-300"
             >
               <Search size={11} /> Advanced search
             </button>
           </div>
           {topSkills.length === 0 ? (
-            <div className="py-6 text-center text-xs text-slate-400">
+            <div className="py-6 text-center text-xs text-slate-400 dark:text-slate-500">
               No skills data yet — upload some resumes
             </div>
           ) : (
@@ -335,17 +335,17 @@ export default function Dashboard({
                   <button
                     key={skill}
                     onClick={() => onNavigate('search')}
-                    className="rounded-lg border border-slate-100 bg-slate-50 p-2.5 text-left hover:bg-blue-50 hover:border-brand-200 transition-colors"
+                    className="rounded-lg border border-slate-100 bg-slate-50 p-2.5 text-left hover:bg-blue-50 hover:border-brand-200 transition-colors dark:border-slate-700 dark:bg-slate-800 dark:hover:bg-blue-900/30 dark:hover:border-blue-700"
                   >
                     <div className="flex items-center justify-between mb-1">
-                      <span className="text-[11px] font-semibold text-slate-700 truncate" title={skill}>
+                      <span className="text-[11px] font-semibold text-slate-700 truncate dark:text-slate-200" title={skill}>
                         {skill}
                       </span>
-                      <span className="text-[11px] font-bold text-brand-500 ml-1 flex-shrink-0">
+                      <span className="text-[11px] font-bold text-brand-500 ml-1 flex-shrink-0 dark:text-blue-300">
                         {count}
                       </span>
                     </div>
-                    <div className="h-1 overflow-hidden rounded-full bg-slate-200">
+                    <div className="h-1 overflow-hidden rounded-full bg-slate-200 dark:bg-slate-700">
                       <div
                         className="h-full rounded-full bg-gradient-to-r from-brand-500 to-indigo-500"
                         style={{ width: `${pct}%` }}
@@ -368,7 +368,7 @@ function KPI({
   return (
     <button
       onClick={onClick}
-      className="rounded-xl border border-blue-100 bg-white p-4 text-left hover:shadow-md transition-shadow"
+      className="rounded-xl border border-blue-100 bg-white dark:border-slate-800 dark:bg-slate-900 p-4 text-left hover:shadow-md transition-shadow"
     >
       <div className="mb-2 flex items-center justify-between">
         <div
@@ -377,11 +377,11 @@ function KPI({
         >
           <Icon size={16} />
         </div>
-        <ArrowRight size={14} className="text-slate-300" />
+        <ArrowRight size={14} className="text-slate-300 dark:text-slate-600" />
       </div>
-      <div className="text-2xl font-bold text-slate-900">{value}</div>
-      <div className="text-[11px] font-semibold text-slate-500">{label}</div>
-      <div className="mt-0.5 text-[10px] text-slate-400">{sub}</div>
+      <div className="text-2xl font-bold text-slate-900 dark:text-slate-100">{value}</div>
+      <div className="text-[11px] font-semibold text-slate-500 dark:text-slate-400">{label}</div>
+      <div className="mt-0.5 text-[10px] text-slate-400 dark:text-slate-500">{sub}</div>
     </button>
   );
 }
@@ -393,12 +393,12 @@ function ProgressBar({
   return (
     <div>
       <div className="mb-1 flex items-center justify-between text-[10px]">
-        <span className="font-semibold text-slate-600">{label}</span>
+        <span className="font-semibold text-slate-600 dark:text-slate-300">{label}</span>
         <span className="font-bold" style={{ color }}>
           {current}/{total} ({pct}%)
         </span>
       </div>
-      <div className="h-1.5 overflow-hidden rounded-full bg-slate-100">
+      <div className="h-1.5 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-700">
         <div
           className="h-full rounded-full transition-all"
           style={{ width: `${pct}%`, background: color }}

@@ -75,11 +75,11 @@ export default function InterviewsView({
   );
 
   return (
-    <div className="h-full overflow-y-auto bg-slate-50 p-5">
+    <div className="h-full overflow-y-auto bg-slate-50 p-5 dark:bg-slate-950">
       <div className="mb-4 flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-bold text-slate-900">Interviews</h1>
-          <p className="text-xs text-slate-500">{interviews.length} total interviews</p>
+          <h1 className="text-xl font-bold text-slate-900 dark:text-slate-100">Interviews</h1>
+          <p className="text-xs text-slate-500 dark:text-slate-400">{interviews.length} total interviews</p>
         </div>
         <button
           onClick={() => setShowForm(true)}
@@ -98,7 +98,7 @@ export default function InterviewsView({
             className={`rounded-full px-3 py-1 text-[10px] font-semibold transition-colors ${
               filter === s
                 ? 'bg-brand-500 text-white'
-                : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
+                : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50 dark:bg-slate-900 dark:text-slate-300 dark:border-slate-700 dark:hover:bg-slate-800'
             }`}
           >
             {s.charAt(0).toUpperCase() + s.slice(1)}
@@ -107,9 +107,9 @@ export default function InterviewsView({
       </div>
 
       {filtered.length === 0 ? (
-        <div className="rounded-xl border border-blue-100 bg-white py-16 text-center">
-          <Calendar size={48} className="mx-auto mb-3 text-slate-300" />
-          <div className="text-sm font-semibold text-slate-500">No interviews</div>
+        <div className="rounded-xl border border-blue-100 bg-white py-16 text-center dark:border-slate-800 dark:bg-slate-900">
+          <Calendar size={48} className="mx-auto mb-3 text-slate-300 dark:text-slate-600" />
+          <div className="text-sm font-semibold text-slate-500 dark:text-slate-300">No interviews</div>
           <button
             onClick={() => setShowForm(true)}
             className="mt-3 rounded-lg bg-brand-500 px-4 py-2 text-xs font-semibold text-white"
@@ -124,7 +124,7 @@ export default function InterviewsView({
             const job = jobs.find((j) => j.id === i.job_id);
             const status = STATUS_COLORS[i.status];
             return (
-              <div key={i.id} className="rounded-xl border border-blue-100 bg-white p-4">
+              <div key={i.id} className="rounded-xl border border-blue-100 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
                 <div className="flex items-start gap-3">
                   {candidate && (
                     <div
@@ -137,10 +137,10 @@ export default function InterviewsView({
                   <div className="flex-1">
                     <div className="flex items-start justify-between gap-3">
                       <div>
-                        <div className="text-sm font-bold text-slate-900">
+                        <div className="text-sm font-bold text-slate-900 dark:text-slate-100">
                           {candidate?.personal.full_name || 'Unknown'}
                         </div>
-                        <div className="text-[11px] text-slate-500">
+                        <div className="text-[11px] text-slate-500 dark:text-slate-400">
                           {job?.title || candidate?.current_title || '—'}
                         </div>
                       </div>
@@ -151,12 +151,12 @@ export default function InterviewsView({
                         >
                           {i.status}
                         </span>
-                        <span className="rounded-full bg-purple-50 px-2 py-0.5 text-[10px] font-semibold text-purple-700">
+                        <span className="rounded-full bg-purple-50 px-2 py-0.5 text-[10px] font-semibold text-purple-700 dark:bg-purple-900/30 dark:text-purple-300">
                           {i.type}
                         </span>
                       </div>
                     </div>
-                    <div className="mt-2 flex flex-wrap items-center gap-3 text-[11px] text-slate-600">
+                    <div className="mt-2 flex flex-wrap items-center gap-3 text-[11px] text-slate-600 dark:text-slate-300">
                       <span className="flex items-center gap-1">
                         <Calendar size={11} className="text-slate-400" />
                         {formatDateTime(i.scheduled_at)}
@@ -181,7 +181,7 @@ export default function InterviewsView({
                           href={i.meeting_link}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="flex items-center gap-1 text-brand-500 hover:underline"
+                          className="flex items-center gap-1 text-brand-500 hover:underline dark:text-blue-300"
                         >
                           <Video size={11} />
                           Join meeting
@@ -190,7 +190,7 @@ export default function InterviewsView({
                       )}
                     </div>
                     {i.feedback && (
-                      <div className="mt-2 rounded-lg bg-slate-50 p-2 text-[11px] text-slate-600">
+                      <div className="mt-2 rounded-lg bg-slate-50 p-2 text-[11px] text-slate-600 dark:bg-slate-800 dark:text-slate-300">
                         <strong>Feedback:</strong> {i.feedback}
                       </div>
                     )}
@@ -200,7 +200,7 @@ export default function InterviewsView({
                         onChange={(e) =>
                           onUpdateInterview(i.id, { status: e.target.value as any })
                         }
-                        className="rounded border border-slate-200 px-2 py-0.5 text-[10px] outline-none focus:border-brand-500"
+                        className="rounded border border-slate-200 px-2 py-0.5 text-[10px] outline-none focus:border-brand-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
                       >
                         <option value="scheduled">Scheduled</option>
                         <option value="completed">Completed</option>
@@ -215,7 +215,7 @@ export default function InterviewsView({
                             onToast('Interview deleted', 'success');
                           }
                         }}
-                        className="rounded p-1 text-slate-500 hover:bg-rose-50 hover:text-rose-600"
+                        className="rounded p-1 text-slate-500 hover:bg-rose-50 hover:text-rose-600 dark:text-slate-400 dark:hover:bg-rose-900/30 dark:hover:text-rose-300"
                       >
                         <Trash2 size={13} />
                       </button>
@@ -231,22 +231,22 @@ export default function InterviewsView({
       {/* Form Modal */}
       {showForm && (
         <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/40 p-4 fade-in">
-          <div className="w-full max-w-lg rounded-xl bg-white shadow-2xl">
-            <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
-              <div className="text-base font-bold text-slate-900">Schedule Interview</div>
-              <button onClick={() => setShowForm(false)} className="text-slate-400">
+          <div className="w-full max-w-lg rounded-xl bg-white shadow-2xl dark:bg-slate-900">
+            <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4 dark:border-slate-800">
+              <div className="text-base font-bold text-slate-900 dark:text-slate-100">Schedule Interview</div>
+              <button onClick={() => setShowForm(false)} className="text-slate-400 hover:text-slate-700 dark:hover:text-slate-200">
                 <X size={18} />
               </button>
             </div>
             <div className="space-y-3 p-5">
               <div>
-                <label className="mb-1 block text-[10px] font-semibold uppercase tracking-wide text-slate-500">
+                <label className="mb-1 block text-[10px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
                   Candidate*
                 </label>
                 <select
                   value={draft.candidate_id}
                   onChange={(e) => setDraft({ ...draft, candidate_id: e.target.value })}
-                  className="w-full rounded-lg border border-slate-200 px-3 py-2 text-xs outline-none focus:border-brand-500"
+                  className="w-full rounded-lg border border-slate-200 px-3 py-2 text-xs outline-none focus:border-brand-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
                 >
                   <option value="">Select candidate...</option>
                   {candidates.map((c) => (
@@ -257,13 +257,13 @@ export default function InterviewsView({
                 </select>
               </div>
               <div>
-                <label className="mb-1 block text-[10px] font-semibold uppercase tracking-wide text-slate-500">
+                <label className="mb-1 block text-[10px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
                   Job (optional)
                 </label>
                 <select
                   value={draft.job_id}
                   onChange={(e) => setDraft({ ...draft, job_id: e.target.value })}
-                  className="w-full rounded-lg border border-slate-200 px-3 py-2 text-xs outline-none focus:border-brand-500"
+                  className="w-full rounded-lg border border-slate-200 px-3 py-2 text-xs outline-none focus:border-brand-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
                 >
                   <option value="">None</option>
                   {jobs.map((j) => (
@@ -275,13 +275,13 @@ export default function InterviewsView({
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="mb-1 block text-[10px] font-semibold uppercase tracking-wide text-slate-500">
+                  <label className="mb-1 block text-[10px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
                     Type
                   </label>
                   <select
                     value={draft.type}
                     onChange={(e) => setDraft({ ...draft, type: e.target.value as any })}
-                    className="w-full rounded-lg border border-slate-200 px-3 py-2 text-xs outline-none focus:border-brand-500"
+                    className="w-full rounded-lg border border-slate-200 px-3 py-2 text-xs outline-none focus:border-brand-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
                   >
                     <option value="phone">Phone</option>
                     <option value="video">Video</option>
@@ -292,7 +292,7 @@ export default function InterviewsView({
                   </select>
                 </div>
                 <div>
-                  <label className="mb-1 block text-[10px] font-semibold uppercase tracking-wide text-slate-500">
+                  <label className="mb-1 block text-[10px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
                     Duration (min)
                   </label>
                   <input
@@ -301,59 +301,59 @@ export default function InterviewsView({
                     onChange={(e) =>
                       setDraft({ ...draft, duration_minutes: parseInt(e.target.value) || 60 })
                     }
-                    className="w-full rounded-lg border border-slate-200 px-3 py-2 text-xs outline-none focus:border-brand-500"
+                    className="w-full rounded-lg border border-slate-200 px-3 py-2 text-xs outline-none focus:border-brand-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
                   />
                 </div>
               </div>
               <div>
-                <label className="mb-1 block text-[10px] font-semibold uppercase tracking-wide text-slate-500">
+                <label className="mb-1 block text-[10px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
                   Scheduled At*
                 </label>
                 <input
                   type="datetime-local"
                   value={draft.scheduled_at}
                   onChange={(e) => setDraft({ ...draft, scheduled_at: e.target.value })}
-                  className="w-full rounded-lg border border-slate-200 px-3 py-2 text-xs outline-none focus:border-brand-500"
+                  className="w-full rounded-lg border border-slate-200 px-3 py-2 text-xs outline-none focus:border-brand-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
                 />
               </div>
               <div>
-                <label className="mb-1 block text-[10px] font-semibold uppercase tracking-wide text-slate-500">
+                <label className="mb-1 block text-[10px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
                   Interviewer
                 </label>
                 <input
                   value={draft.interviewer}
                   onChange={(e) => setDraft({ ...draft, interviewer: e.target.value })}
                   placeholder="Interviewer name"
-                  className="w-full rounded-lg border border-slate-200 px-3 py-2 text-xs outline-none focus:border-brand-500"
+                  className="w-full rounded-lg border border-slate-200 px-3 py-2 text-xs outline-none focus:border-brand-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
                 />
               </div>
               <div>
-                <label className="mb-1 block text-[10px] font-semibold uppercase tracking-wide text-slate-500">
+                <label className="mb-1 block text-[10px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
                   Location
                 </label>
                 <input
                   value={draft.location}
                   onChange={(e) => setDraft({ ...draft, location: e.target.value })}
                   placeholder="Office, address, or 'Online'"
-                  className="w-full rounded-lg border border-slate-200 px-3 py-2 text-xs outline-none focus:border-brand-500"
+                  className="w-full rounded-lg border border-slate-200 px-3 py-2 text-xs outline-none focus:border-brand-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
                 />
               </div>
               <div>
-                <label className="mb-1 block text-[10px] font-semibold uppercase tracking-wide text-slate-500">
+                <label className="mb-1 block text-[10px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
                   Meeting Link
                 </label>
                 <input
                   value={draft.meeting_link}
                   onChange={(e) => setDraft({ ...draft, meeting_link: e.target.value })}
                   placeholder="https://meet.google.com/..."
-                  className="w-full rounded-lg border border-slate-200 px-3 py-2 text-xs outline-none focus:border-brand-500"
+                  className="w-full rounded-lg border border-slate-200 px-3 py-2 text-xs outline-none focus:border-brand-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
                 />
               </div>
             </div>
-            <div className="flex justify-end gap-2 border-t border-slate-100 px-5 py-3">
+            <div className="flex justify-end gap-2 border-t border-slate-100 px-5 py-3 dark:border-slate-800">
               <button
                 onClick={() => setShowForm(false)}
-                className="rounded-lg border border-slate-200 px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-50"
+                className="rounded-lg border border-slate-200 px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
               >
                 Cancel
               </button>

@@ -109,11 +109,11 @@ ${o.benefits.length ? `<div class="row"><span>Benefits</span><b>${o.benefits.joi
   }
 
   return (
-    <div className="h-full overflow-y-auto bg-slate-50 p-5">
+    <div className="h-full overflow-y-auto bg-slate-50 p-5 dark:bg-slate-950">
       <div className="mb-4 flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-bold text-slate-900">Offer Letters</h1>
-          <p className="text-xs text-slate-500">{offers.length} offers</p>
+          <h1 className="text-xl font-bold text-slate-900 dark:text-slate-100">Offer Letters</h1>
+          <p className="text-xs text-slate-500 dark:text-slate-400">{offers.length} offers</p>
         </div>
         <button
           onClick={() => setShowForm(true)}
@@ -132,7 +132,7 @@ ${o.benefits.length ? `<div class="row"><span>Benefits</span><b>${o.benefits.joi
             className={`rounded-full px-3 py-1 text-[10px] font-semibold transition-colors ${
               filter === s
                 ? 'bg-brand-500 text-white'
-                : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
+                : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50 dark:bg-slate-900 dark:text-slate-300 dark:border-slate-700 dark:hover:bg-slate-800'
             }`}
           >
             {s.charAt(0).toUpperCase() + s.slice(1)}
@@ -141,9 +141,9 @@ ${o.benefits.length ? `<div class="row"><span>Benefits</span><b>${o.benefits.joi
       </div>
 
       {filtered.length === 0 ? (
-        <div className="rounded-xl border border-blue-100 bg-white py-16 text-center">
-          <FileSignature size={48} className="mx-auto mb-3 text-slate-300" />
-          <div className="text-sm font-semibold text-slate-500">No offers yet</div>
+        <div className="rounded-xl border border-blue-100 bg-white py-16 text-center dark:border-slate-800 dark:bg-slate-900">
+          <FileSignature size={48} className="mx-auto mb-3 text-slate-300 dark:text-slate-600" />
+          <div className="text-sm font-semibold text-slate-500 dark:text-slate-300">No offers yet</div>
           <button
             onClick={() => setShowForm(true)}
             className="mt-3 rounded-lg bg-brand-500 px-4 py-2 text-xs font-semibold text-white"
@@ -157,7 +157,7 @@ ${o.benefits.length ? `<div class="row"><span>Benefits</span><b>${o.benefits.joi
             const c = candidates.find((x) => x.id === o.candidate_id);
             const status = STATUS_COLORS[o.status];
             return (
-              <div key={o.id} className="rounded-xl border border-blue-100 bg-white p-4">
+              <div key={o.id} className="rounded-xl border border-blue-100 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
                 <div className="flex items-start gap-3">
                   {c && (
                     <div
@@ -170,10 +170,10 @@ ${o.benefits.length ? `<div class="row"><span>Benefits</span><b>${o.benefits.joi
                   <div className="flex-1">
                     <div className="flex items-start justify-between">
                       <div>
-                        <div className="text-sm font-bold text-slate-900">
+                        <div className="text-sm font-bold text-slate-900 dark:text-slate-100">
                           {c?.personal.full_name || 'Unknown'}
                         </div>
-                        <div className="text-[11px] text-brand-500 font-medium">
+                        <div className="text-[11px] text-brand-500 font-medium dark:text-blue-300">
                           {o.position}
                         </div>
                       </div>
@@ -184,7 +184,7 @@ ${o.benefits.length ? `<div class="row"><span>Benefits</span><b>${o.benefits.joi
                         {o.status}
                       </span>
                     </div>
-                    <div className="mt-2 flex flex-wrap items-center gap-4 text-[11px] text-slate-600">
+                    <div className="mt-2 flex flex-wrap items-center gap-4 text-[11px] text-slate-600 dark:text-slate-300">
                       <span>
                         <strong>{formatCurrency(o.salary, o.currency)}</strong>/mo
                       </span>
@@ -196,7 +196,7 @@ ${o.benefits.length ? `<div class="row"><span>Benefits</span><b>${o.benefits.joi
                         {o.benefits.map((b, i) => (
                           <span
                             key={i}
-                            className="rounded-full bg-slate-100 px-2 py-0.5 text-[9px] font-medium text-slate-600"
+                            className="rounded-full bg-slate-100 px-2 py-0.5 text-[9px] font-medium text-slate-600 dark:bg-slate-800 dark:text-slate-300"
                           >
                             {b}
                           </span>
@@ -206,7 +206,7 @@ ${o.benefits.length ? `<div class="row"><span>Benefits</span><b>${o.benefits.joi
                     <div className="mt-2.5 flex items-center gap-1.5">
                       <button
                         onClick={() => previewLetter(o)}
-                        className="rounded-lg bg-blue-50 px-2.5 py-1 text-[10px] font-semibold text-brand-500 hover:bg-blue-100"
+                        className="rounded-lg bg-blue-50 px-2.5 py-1 text-[10px] font-semibold text-brand-500 hover:bg-blue-100 dark:bg-blue-900/30 dark:text-blue-300 dark:hover:bg-blue-900/50"
                       >
                         📄 Preview Letter
                       </button>
@@ -221,7 +221,7 @@ ${o.benefits.length ? `<div class="row"><span>Benefits</span><b>${o.benefits.joi
                                 : o.responded_date
                           })
                         }
-                        className="rounded border border-slate-200 px-2 py-0.5 text-[10px] outline-none focus:border-brand-500"
+                        className="rounded border border-slate-200 px-2 py-0.5 text-[10px] outline-none focus:border-brand-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
                       >
                         <option value="draft">Draft</option>
                         <option value="sent">Sent</option>
@@ -237,7 +237,7 @@ ${o.benefits.length ? `<div class="row"><span>Benefits</span><b>${o.benefits.joi
                             onToast('Offer deleted', 'success');
                           }
                         }}
-                        className="rounded p-1 text-slate-500 hover:bg-rose-50 hover:text-rose-600"
+                        className="rounded p-1 text-slate-500 hover:bg-rose-50 hover:text-rose-600 dark:text-slate-400 dark:hover:bg-rose-900/30 dark:hover:text-rose-300"
                       >
                         <Trash2 size={13} />
                       </button>
@@ -253,16 +253,16 @@ ${o.benefits.length ? `<div class="row"><span>Benefits</span><b>${o.benefits.joi
       {/* Form Modal */}
       {showForm && (
         <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/40 p-4 fade-in">
-          <div className="w-full max-w-lg rounded-xl bg-white shadow-2xl">
-            <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
-              <div className="text-base font-bold text-slate-900">New Offer Letter</div>
-              <button onClick={() => setShowForm(false)} className="text-slate-400">
+          <div className="w-full max-w-lg rounded-xl bg-white shadow-2xl dark:bg-slate-900">
+            <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4 dark:border-slate-800">
+              <div className="text-base font-bold text-slate-900 dark:text-slate-100">New Offer Letter</div>
+              <button onClick={() => setShowForm(false)} className="text-slate-400 hover:text-slate-700 dark:hover:text-slate-200">
                 <X size={18} />
               </button>
             </div>
             <div className="space-y-3 p-5">
               <div>
-                <label className="mb-1 block text-[10px] font-semibold uppercase tracking-wide text-slate-500">
+                <label className="mb-1 block text-[10px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
                   Candidate*
                 </label>
                 <select
@@ -276,7 +276,7 @@ ${o.benefits.length ? `<div class="row"><span>Benefits</span><b>${o.benefits.joi
                       job_id: c?.jobId || draft.job_id
                     });
                   }}
-                  className="w-full rounded-lg border border-slate-200 px-3 py-2 text-xs outline-none focus:border-brand-500"
+                  className="w-full rounded-lg border border-slate-200 px-3 py-2 text-xs outline-none focus:border-brand-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
                 >
                   <option value="">Select candidate...</option>
                   {candidates.map((c) => (
@@ -287,24 +287,24 @@ ${o.benefits.length ? `<div class="row"><span>Benefits</span><b>${o.benefits.joi
                 </select>
               </div>
               <div>
-                <label className="mb-1 block text-[10px] font-semibold uppercase tracking-wide text-slate-500">
+                <label className="mb-1 block text-[10px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
                   Position*
                 </label>
                 <input
                   value={draft.position}
                   onChange={(e) => setDraft({ ...draft, position: e.target.value })}
-                  className="w-full rounded-lg border border-slate-200 px-3 py-2 text-xs outline-none focus:border-brand-500"
+                  className="w-full rounded-lg border border-slate-200 px-3 py-2 text-xs outline-none focus:border-brand-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
                   placeholder="e.g. Senior Site Engineer"
                 />
               </div>
               <div>
-                <label className="mb-1 block text-[10px] font-semibold uppercase tracking-wide text-slate-500">
+                <label className="mb-1 block text-[10px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
                   Job (optional)
                 </label>
                 <select
                   value={draft.job_id}
                   onChange={(e) => setDraft({ ...draft, job_id: e.target.value })}
-                  className="w-full rounded-lg border border-slate-200 px-3 py-2 text-xs outline-none focus:border-brand-500"
+                  className="w-full rounded-lg border border-slate-200 px-3 py-2 text-xs outline-none focus:border-brand-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
                 >
                   <option value="">None</option>
                   {jobs.map((j) => (
@@ -316,7 +316,7 @@ ${o.benefits.length ? `<div class="row"><span>Benefits</span><b>${o.benefits.joi
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="mb-1 block text-[10px] font-semibold uppercase tracking-wide text-slate-500">
+                  <label className="mb-1 block text-[10px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
                     Salary
                   </label>
                   <input
@@ -325,17 +325,17 @@ ${o.benefits.length ? `<div class="row"><span>Benefits</span><b>${o.benefits.joi
                     onChange={(e) =>
                       setDraft({ ...draft, salary: parseFloat(e.target.value) || 0 })
                     }
-                    className="w-full rounded-lg border border-slate-200 px-3 py-2 text-xs outline-none focus:border-brand-500"
+                    className="w-full rounded-lg border border-slate-200 px-3 py-2 text-xs outline-none focus:border-brand-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
                   />
                 </div>
                 <div>
-                  <label className="mb-1 block text-[10px] font-semibold uppercase tracking-wide text-slate-500">
+                  <label className="mb-1 block text-[10px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
                     Currency
                   </label>
                   <select
                     value={draft.currency}
                     onChange={(e) => setDraft({ ...draft, currency: e.target.value })}
-                    className="w-full rounded-lg border border-slate-200 px-3 py-2 text-xs outline-none focus:border-brand-500"
+                    className="w-full rounded-lg border border-slate-200 px-3 py-2 text-xs outline-none focus:border-brand-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
                   >
                     <option value="OMR">OMR</option>
                     <option value="USD">USD</option>
@@ -344,30 +344,30 @@ ${o.benefits.length ? `<div class="row"><span>Benefits</span><b>${o.benefits.joi
                   </select>
                 </div>
                 <div>
-                  <label className="mb-1 block text-[10px] font-semibold uppercase tracking-wide text-slate-500">
+                  <label className="mb-1 block text-[10px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
                     Start Date
                   </label>
                   <input
                     type="date"
                     value={draft.start_date}
                     onChange={(e) => setDraft({ ...draft, start_date: e.target.value })}
-                    className="w-full rounded-lg border border-slate-200 px-3 py-2 text-xs outline-none focus:border-brand-500"
+                    className="w-full rounded-lg border border-slate-200 px-3 py-2 text-xs outline-none focus:border-brand-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
                   />
                 </div>
                 <div>
-                  <label className="mb-1 block text-[10px] font-semibold uppercase tracking-wide text-slate-500">
+                  <label className="mb-1 block text-[10px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
                     Expiry Date
                   </label>
                   <input
                     type="date"
                     value={draft.expiry_date}
                     onChange={(e) => setDraft({ ...draft, expiry_date: e.target.value })}
-                    className="w-full rounded-lg border border-slate-200 px-3 py-2 text-xs outline-none focus:border-brand-500"
+                    className="w-full rounded-lg border border-slate-200 px-3 py-2 text-xs outline-none focus:border-brand-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
                   />
                 </div>
               </div>
               <div>
-                <label className="mb-1 block text-[10px] font-semibold uppercase tracking-wide text-slate-500">
+                <label className="mb-1 block text-[10px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
                   Benefits (comma-separated)
                 </label>
                 <input
@@ -379,27 +379,27 @@ ${o.benefits.length ? `<div class="row"><span>Benefits</span><b>${o.benefits.joi
                     })
                   }
                   placeholder="e.g. Medical, Annual Leave 30 days, Air Ticket"
-                  className="w-full rounded-lg border border-slate-200 px-3 py-2 text-xs outline-none focus:border-brand-500"
+                  className="w-full rounded-lg border border-slate-200 px-3 py-2 text-xs outline-none focus:border-brand-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
                 />
               </div>
               <div>
-                <label className="mb-1 block text-[10px] font-semibold uppercase tracking-wide text-slate-500">
+                <label className="mb-1 block text-[10px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
                   Initial Status
                 </label>
                 <select
                   value={draft.status}
                   onChange={(e) => setDraft({ ...draft, status: e.target.value as any })}
-                  className="w-full rounded-lg border border-slate-200 px-3 py-2 text-xs outline-none focus:border-brand-500"
+                  className="w-full rounded-lg border border-slate-200 px-3 py-2 text-xs outline-none focus:border-brand-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
                 >
                   <option value="draft">Draft</option>
                   <option value="sent">Sent</option>
                 </select>
               </div>
             </div>
-            <div className="flex justify-end gap-2 border-t border-slate-100 px-5 py-3">
+            <div className="flex justify-end gap-2 border-t border-slate-100 px-5 py-3 dark:border-slate-800">
               <button
                 onClick={() => setShowForm(false)}
-                className="rounded-lg border border-slate-200 px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-50"
+                className="rounded-lg border border-slate-200 px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
               >
                 Cancel
               </button>

@@ -88,11 +88,11 @@ export default function JobsView({
   const filtered = jobs.filter((j) => statusFilter === 'all' || j.status === statusFilter);
 
   return (
-    <div className="h-full overflow-y-auto bg-slate-50 p-5">
+    <div className="h-full overflow-y-auto bg-slate-50 p-5 dark:bg-slate-950">
       <div className="mb-4 flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-bold text-slate-900">Job Postings</h1>
-          <p className="text-xs text-slate-500">
+          <h1 className="text-xl font-bold text-slate-900 dark:text-slate-100">Job Postings</h1>
+          <p className="text-xs text-slate-500 dark:text-slate-400">
             {filtered.length} of {jobs.length} positions
           </p>
         </div>
@@ -114,7 +114,7 @@ export default function JobsView({
             className={`rounded-full px-3 py-1 text-[10px] font-semibold transition-colors ${
               statusFilter === s
                 ? 'bg-brand-500 text-white'
-                : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
+                : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50 dark:bg-slate-900 dark:text-slate-300 dark:border-slate-700 dark:hover:bg-slate-800'
             }`}
           >
             {s === 'all' ? 'All' : s.replace('_', ' ').replace(/\b\w/g, (l) => l.toUpperCase())}
@@ -126,8 +126,8 @@ export default function JobsView({
       <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-3">
         {filtered.length === 0 ? (
           <div className="col-span-full py-16 text-center">
-            <Briefcase size={48} className="mx-auto mb-3 text-slate-300" />
-            <div className="text-sm font-semibold text-slate-500">No jobs yet</div>
+            <Briefcase size={48} className="mx-auto mb-3 text-slate-300 dark:text-slate-600" />
+            <div className="text-sm font-semibold text-slate-500 dark:text-slate-300">No jobs yet</div>
             <button
               onClick={openCreate}
               className="mt-3 rounded-lg bg-brand-500 px-4 py-2 text-xs font-semibold text-white"
@@ -142,12 +142,12 @@ export default function JobsView({
             return (
               <div
                 key={j.id}
-                className="rounded-xl border border-blue-100 bg-white p-4 hover:shadow-md transition-shadow"
+                className="rounded-xl border border-blue-100 bg-white p-4 hover:shadow-md transition-shadow dark:border-slate-800 dark:bg-slate-900"
               >
                 <div className="mb-2 flex items-start justify-between">
                   <div className="flex-1">
-                    <div className="text-sm font-bold text-slate-900">{j.title}</div>
-                    <div className="text-[11px] text-slate-500">{j.department}</div>
+                    <div className="text-sm font-bold text-slate-900 dark:text-slate-100">{j.title}</div>
+                    <div className="text-[11px] text-slate-500 dark:text-slate-400">{j.department}</div>
                   </div>
                   <div
                     className="rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase"
@@ -157,7 +157,7 @@ export default function JobsView({
                   </div>
                 </div>
 
-                <div className="mb-3 space-y-1 text-[11px] text-slate-600">
+                <div className="mb-3 space-y-1 text-[11px] text-slate-600 dark:text-slate-300">
                   <div className="flex items-center gap-1.5">
                     <MapPin size={11} className="text-slate-400" />
                     {j.location} · {j.branch}
@@ -178,27 +178,27 @@ export default function JobsView({
                     {j.skills_required.slice(0, 4).map((s, i) => (
                       <span
                         key={i}
-                        className="rounded-full bg-blue-50 px-2 py-0.5 text-[9px] font-medium text-brand-500"
+                        className="rounded-full bg-blue-50 px-2 py-0.5 text-[9px] font-medium text-brand-500 dark:bg-blue-900/30 dark:text-blue-300"
                       >
                         {s}
                       </span>
                     ))}
                     {j.skills_required.length > 4 && (
-                      <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[9px] font-medium text-slate-500">
+                      <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[9px] font-medium text-slate-500 dark:bg-slate-800 dark:text-slate-400">
                         +{j.skills_required.length - 4}
                       </span>
                     )}
                   </div>
                 )}
 
-                <div className="flex items-center justify-between border-t border-slate-100 pt-2.5">
-                  <div className="text-[10px] text-slate-400">
+                <div className="flex items-center justify-between border-t border-slate-100 pt-2.5 dark:border-slate-800">
+                  <div className="text-[10px] text-slate-400 dark:text-slate-500">
                     Posted {formatDate(j.posted_date)}
                   </div>
                   <div className="flex gap-1">
                     <button
                       onClick={() => openEdit(j)}
-                      className="rounded p-1 text-slate-500 hover:bg-blue-50 hover:text-brand-500"
+                      className="rounded p-1 text-slate-500 hover:bg-blue-50 hover:text-brand-500 dark:text-slate-400 dark:hover:bg-blue-900/30 dark:hover:text-blue-300"
                     >
                       <Edit2 size={13} />
                     </button>
@@ -209,7 +209,7 @@ export default function JobsView({
                           onToast('Job deleted', 'success');
                         }
                       }}
-                      className="rounded p-1 text-slate-500 hover:bg-rose-50 hover:text-rose-600"
+                      className="rounded p-1 text-slate-500 hover:bg-rose-50 hover:text-rose-600 dark:text-slate-400 dark:hover:bg-rose-900/30 dark:hover:text-rose-300"
                     >
                       <Trash2 size={13} />
                     </button>
@@ -224,16 +224,16 @@ export default function JobsView({
       {/* Job Form Modal */}
       {showForm && (
         <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/40 p-4 fade-in">
-          <div className="w-full max-w-2xl rounded-xl bg-white shadow-2xl">
-            <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
+          <div className="w-full max-w-2xl rounded-xl bg-white shadow-2xl dark:bg-slate-900">
+            <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4 dark:border-slate-800">
               <div>
-                <div className="text-base font-bold text-slate-900">
+                <div className="text-base font-bold text-slate-900 dark:text-slate-100">
                   {editingId ? 'Edit Job' : 'New Job Posting'}
                 </div>
               </div>
               <button
                 onClick={() => setShowForm(false)}
-                className="text-slate-400 hover:text-slate-700"
+                className="text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
               >
                 <X size={18} />
               </button>
@@ -245,7 +245,7 @@ export default function JobsView({
                     value={draft.title}
                     onChange={(e) => setDraft({ ...draft, title: e.target.value })}
                     placeholder="e.g. Senior Site Engineer"
-                    className="w-full rounded-lg border border-slate-200 px-3 py-2 text-xs outline-none focus:border-brand-500"
+                    className="w-full rounded-lg border border-slate-200 px-3 py-2 text-xs outline-none focus:border-brand-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
                   />
                 </Field>
                 <Field label="Department">
@@ -253,21 +253,21 @@ export default function JobsView({
                     value={draft.department}
                     onChange={(e) => setDraft({ ...draft, department: e.target.value })}
                     placeholder="e.g. Civil Engineering"
-                    className="w-full rounded-lg border border-slate-200 px-3 py-2 text-xs outline-none focus:border-brand-500"
+                    className="w-full rounded-lg border border-slate-200 px-3 py-2 text-xs outline-none focus:border-brand-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
                   />
                 </Field>
                 <Field label="Location">
                   <input
                     value={draft.location}
                     onChange={(e) => setDraft({ ...draft, location: e.target.value })}
-                    className="w-full rounded-lg border border-slate-200 px-3 py-2 text-xs outline-none focus:border-brand-500"
+                    className="w-full rounded-lg border border-slate-200 px-3 py-2 text-xs outline-none focus:border-brand-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
                   />
                 </Field>
                 <Field label="Branch">
                   <select
                     value={draft.branch}
                     onChange={(e) => setDraft({ ...draft, branch: e.target.value })}
-                    className="w-full rounded-lg border border-slate-200 px-3 py-2 text-xs outline-none focus:border-brand-500"
+                    className="w-full rounded-lg border border-slate-200 px-3 py-2 text-xs outline-none focus:border-brand-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
                   >
                     <option value="HQ">HQ (Muscat)</option>
                     <option value="Sohar">Sohar</option>
@@ -282,7 +282,7 @@ export default function JobsView({
                     onChange={(e) =>
                       setDraft({ ...draft, employment_type: e.target.value as any })
                     }
-                    className="w-full rounded-lg border border-slate-200 px-3 py-2 text-xs outline-none focus:border-brand-500"
+                    className="w-full rounded-lg border border-slate-200 px-3 py-2 text-xs outline-none focus:border-brand-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
                   >
                     <option value="full_time">Full Time</option>
                     <option value="part_time">Part Time</option>
@@ -294,7 +294,7 @@ export default function JobsView({
                   <select
                     value={draft.status}
                     onChange={(e) => setDraft({ ...draft, status: e.target.value as any })}
-                    className="w-full rounded-lg border border-slate-200 px-3 py-2 text-xs outline-none focus:border-brand-500"
+                    className="w-full rounded-lg border border-slate-200 px-3 py-2 text-xs outline-none focus:border-brand-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
                   >
                     <option value="draft">Draft</option>
                     <option value="open">Open</option>
@@ -310,7 +310,7 @@ export default function JobsView({
                     onChange={(e) =>
                       setDraft({ ...draft, openings: parseInt(e.target.value) || 1 })
                     }
-                    className="w-full rounded-lg border border-slate-200 px-3 py-2 text-xs outline-none focus:border-brand-500"
+                    className="w-full rounded-lg border border-slate-200 px-3 py-2 text-xs outline-none focus:border-brand-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
                   />
                 </Field>
                 <Field label="Filled">
@@ -321,7 +321,7 @@ export default function JobsView({
                     onChange={(e) =>
                       setDraft({ ...draft, filled: parseInt(e.target.value) || 0 })
                     }
-                    className="w-full rounded-lg border border-slate-200 px-3 py-2 text-xs outline-none focus:border-brand-500"
+                    className="w-full rounded-lg border border-slate-200 px-3 py-2 text-xs outline-none focus:border-brand-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
                   />
                 </Field>
                 <Field label="Salary Min (OMR)">
@@ -332,7 +332,7 @@ export default function JobsView({
                     onChange={(e) =>
                       setDraft({ ...draft, salary_min: parseFloat(e.target.value) || 0 })
                     }
-                    className="w-full rounded-lg border border-slate-200 px-3 py-2 text-xs outline-none focus:border-brand-500"
+                    className="w-full rounded-lg border border-slate-200 px-3 py-2 text-xs outline-none focus:border-brand-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
                   />
                 </Field>
                 <Field label="Salary Max (OMR)">
@@ -343,7 +343,7 @@ export default function JobsView({
                     onChange={(e) =>
                       setDraft({ ...draft, salary_max: parseFloat(e.target.value) || 0 })
                     }
-                    className="w-full rounded-lg border border-slate-200 px-3 py-2 text-xs outline-none focus:border-brand-500"
+                    className="w-full rounded-lg border border-slate-200 px-3 py-2 text-xs outline-none focus:border-brand-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
                   />
                 </Field>
                 <Field label="Closing Date">
@@ -351,7 +351,7 @@ export default function JobsView({
                     type="date"
                     value={draft.closing_date}
                     onChange={(e) => setDraft({ ...draft, closing_date: e.target.value })}
-                    className="w-full rounded-lg border border-slate-200 px-3 py-2 text-xs outline-none focus:border-brand-500"
+                    className="w-full rounded-lg border border-slate-200 px-3 py-2 text-xs outline-none focus:border-brand-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
                   />
                 </Field>
               </div>
@@ -361,7 +361,7 @@ export default function JobsView({
                   value={draft.description}
                   onChange={(e) => setDraft({ ...draft, description: e.target.value })}
                   rows={3}
-                  className="w-full rounded-lg border border-slate-200 px-3 py-2 text-xs outline-none focus:border-brand-500"
+                  className="w-full rounded-lg border border-slate-200 px-3 py-2 text-xs outline-none focus:border-brand-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
                   placeholder="Job description, scope, expectations..."
                 />
               </Field>
@@ -379,14 +379,14 @@ export default function JobsView({
                     })
                   }
                   placeholder="e.g. AutoCAD, Revit, Project Management"
-                  className="w-full rounded-lg border border-slate-200 px-3 py-2 text-xs outline-none focus:border-brand-500"
+                  className="w-full rounded-lg border border-slate-200 px-3 py-2 text-xs outline-none focus:border-brand-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
                 />
               </Field>
             </div>
-            <div className="flex justify-end gap-2 border-t border-slate-100 px-5 py-3">
+            <div className="flex justify-end gap-2 border-t border-slate-100 px-5 py-3 dark:border-slate-800">
               <button
                 onClick={() => setShowForm(false)}
-                className="rounded-lg border border-slate-200 px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-50"
+                className="rounded-lg border border-slate-200 px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
               >
                 Cancel
               </button>
@@ -409,7 +409,7 @@ function Field({
 }: { label: string; children: React.ReactNode; className?: string }) {
   return (
     <div className={className}>
-      <label className="mb-1 block text-[10px] font-semibold uppercase tracking-wide text-slate-500">
+      <label className="mb-1 block text-[10px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
         {label}
       </label>
       {children}

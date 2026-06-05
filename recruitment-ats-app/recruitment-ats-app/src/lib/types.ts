@@ -124,6 +124,8 @@ export interface Candidate extends ParsedResume {
 export interface JobPosting {
   id: string;
   title: string;
+  /** Client / end-customer the role is being filled for (agency workflow). */
+  client: string;
   department: string;
   location: string;
   branch: string;

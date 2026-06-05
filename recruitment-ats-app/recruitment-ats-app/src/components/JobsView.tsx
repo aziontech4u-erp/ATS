@@ -15,6 +15,7 @@ interface JobsViewProps {
 
 const EMPTY_JOB: Omit<JobPosting, 'id'> = {
   title: '',
+  client: '',
   department: '',
   location: 'Muscat',
   branch: 'HQ',
@@ -148,6 +149,11 @@ export default function JobsView({
                   <div className="flex-1">
                     <div className="text-sm font-bold text-slate-900 dark:text-slate-100">{j.title}</div>
                     <div className="text-[11px] text-slate-500 dark:text-slate-400">{j.department}</div>
+                    {j.client && (
+                      <div className="mt-1 inline-flex items-center gap-1 rounded-full bg-purple-50 px-2 py-0.5 text-[10px] font-semibold text-purple-700 dark:bg-purple-900/30 dark:text-purple-300">
+                        Client: {j.client}
+                      </div>
+                    )}
                   </div>
                   <div
                     className="rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase"
@@ -245,6 +251,14 @@ export default function JobsView({
                     value={draft.title}
                     onChange={(e) => setDraft({ ...draft, title: e.target.value })}
                     placeholder="e.g. Senior Site Engineer"
+                    className="w-full rounded-lg border border-slate-200 px-3 py-2 text-xs outline-none focus:border-brand-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+                  />
+                </Field>
+                <Field label="Client">
+                  <input
+                    value={draft.client}
+                    onChange={(e) => setDraft({ ...draft, client: e.target.value })}
+                    placeholder="e.g. Bank Muscat, Petroleum Development Oman"
                     className="w-full rounded-lg border border-slate-200 px-3 py-2 text-xs outline-none focus:border-brand-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
                   />
                 </Field>

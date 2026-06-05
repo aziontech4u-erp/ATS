@@ -177,7 +177,6 @@ export interface OfferLetter {
 export type AppView =
   | 'dashboard'
   | 'parser'
-  | 'mail'
   | 'candidates'
   | 'search'
   | 'jobs'
@@ -187,34 +186,6 @@ export type AppView =
   | 'offers'
   | 'reports'
   | 'company';
-
-// ─── Mail Inbox ────────────────────────────────────────────────
-
-export type MailStatus = 'unprocessed' | 'processed' | 'ignored';
-
-export interface MailAttachment {
-  filename: string;
-  mime: string;
-  // Base64-encoded content (without data: prefix). Empty for placeholder rows.
-  data: string;
-  sizeBytes: number;
-}
-
-export interface MailItem {
-  id: string;
-  fromName: string;
-  fromEmail: string;
-  subject: string;
-  /** ISO timestamp the mail was received. */
-  receivedAt: string;
-  body: string;
-  attachments: MailAttachment[];
-  status: MailStatus;
-  /** Candidate id created from this mail's attachment (if processed). */
-  candidateId?: string;
-  /** True when the mail was created from a forwarded .eml file. */
-  fromEml?: boolean;
-}
 
 // ─── Calendar ──────────────────────────────────────────────────
 

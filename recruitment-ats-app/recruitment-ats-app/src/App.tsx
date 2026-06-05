@@ -13,9 +13,7 @@ import SettingsModal from './components/SettingsModal';
 import LoginView from './components/LoginView';
 import CompanySettingsView from './components/CompanySettingsView';
 import IntakeFormView from './components/IntakeFormView';
-import MailInboxView from './components/MailInboxView';
 import CalendarView from './components/CalendarView';
-import { loadMail } from './lib/mailbox';
 import { loadReminders, buildEvents, countToday } from './lib/calendar';
 import Toast, { type ToastMessage } from './components/Toast';
 import {
@@ -37,8 +35,8 @@ export default function App() {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
   const [loaded, setLoaded] = useState(false);
-  // Refresh counter — bump when mail/calendar storage changes so sidebar badges recompute.
-  const [mailCounterTick, setMailCounterTick] = useState(0);
+  // Refresh counter — bump when calendar storage changes so sidebar badges recompute.
+  const [badgeTick, setBadgeTick] = useState(0);
 
   const { user } = useUi();
 
@@ -70,18 +68,14 @@ export default function App() {
     }
   }, [candidates, jobs, interviews, offers, loaded]);
 
-  // ── Sidebar badge counts (mail + calendar) ──
-  // Recomputes when the user navigates (cheap) or when MailInbox / Calendar bumps the tick.
-  const mailUnread = useMemo(() => {
-    return loadMail().filter((m) => m.status === 'unprocessed').length;
-  }, [mailCounterTick, activeView]);
-
+  // ── Sidebar badge counts (calendar today) ──
+  // Recomputes when the user navigates (cheap) or when Calendar bumps the tick.
   const calendarToday = useMemo(() => {
     const events = buildEvents(loadReminders(), interviews);
     return countToday(events);
-  }, [mailCounterTick, activeView, interviews]);
+  }, [badgeTick, activeView, interviews]);
 
-  const bumpBadges = useCallback(() => setMailCounterTick((t) => t + 1), []);
+  const bumpBadges = useCallback(() => setBadgeTick((t) => t + 1), []);
 
   // ── Toast helper ──
   const showToast = useCallback(
@@ -168,7 +162,6 @@ export default function App() {
         jobCount={jobs.length}
         interviewCount={interviews.filter((i) => i.status === 'scheduled').length}
         offerCount={offers.filter((o) => o.status === 'sent').length}
-        mailUnread={mailUnread}
         calendarToday={calendarToday}
         apiKeyConnected={!!apiKey}
         onToggleSettings={() => setSettingsOpen(true)}
@@ -258,15 +251,6 @@ export default function App() {
             jobs={jobs}
             interviews={interviews}
             offers={offers}
-          />
-        )}
-        {activeView === 'mail' && (
-          <MailInboxView
-            candidates={candidates}
-            jobs={jobs}
-            onAddCandidate={(c) => { addCandidate(c); bumpBadges(); }}
-            onUpdateCandidate={updateCandidate}
-            onToast={showToast}
           />
         )}
         {activeView === 'calendar' && (

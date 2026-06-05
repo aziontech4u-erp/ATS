@@ -1,10 +1,10 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import {
   Building2, Users as UsersIcon, Bell, Plug, Palette, ShieldCheck,
-  ScrollText, Database, Upload, Save, Trash2, Plus, Download, Power, Image as ImageIcon
+  ScrollText, Database, Upload, Save, Trash2, Plus, Download, Image as ImageIcon
 } from 'lucide-react';
 import type {
-  CompanySettings, UserAccount, IntegrationConfig
+  CompanySettings, UserAccount
 } from '../lib/types';
 import {
   loadCompanySettings, saveCompanySettings, pushAudit
@@ -34,10 +34,6 @@ export default function CompanySettingsView({ onToast }: Props) {
   const [tab, setTab] = useState<Tab>('company');
   const [settings, setSettings] = useState<CompanySettings>(() => loadCompanySettings());
   const [dirty, setDirty] = useState(false);
-
-  useEffect(() => {
-    // initial load already in state
-  }, []);
 
   function patch(next: CompanySettings, action?: string, target?: string) {
     let withAudit = next;
@@ -356,20 +352,6 @@ function NotificationsTab({ settings, patch }: { settings: CompanySettings; patc
 // ── Integrations ────────────────────────────────────────────────
 
 function IntegrationsTab({ settings, patch }: { settings: CompanySettings; patch: (s: CompanySettings, action?: string, target?: string) => void }) {
-  function toggle(i: IntegrationConfig) {
-    const next = settings.integrations.map((x) =>
-      x.id === i.id ? { ...x, connected: !x.connected } : x
-    );
-    patch({ ...settings, integrations: next }, i.connected ? 'disconnected_integration' : 'connected_integration', i.name);
-  }
-  const groups: { label: string; cat: IntegrationConfig['category'] }[] = [
-    { label: 'Job Boards', cat: 'job_board' },
-    { label: 'Email',      cat: 'email' },
-    { label: 'Calendar',   cat: 'calendar' },
-    { label: 'Video',      cat: 'video' },
-    { label: 'HR Systems', cat: 'hr' },
-    { label: 'Storage',    cat: 'storage' }
-  ];
   const webhook = settings.intakeWebhook || { url: '', enabled: false };
   function setWebhook(next: Partial<typeof webhook>) {
     patch({ ...settings, intakeWebhook: { ...webhook, ...next } }, 'updated_intake_webhook', '');
@@ -405,33 +387,23 @@ function IntegrationsTab({ settings, patch }: { settings: CompanySettings; patch
         </div>
       </Card>
 
-      {groups.map((g) => (
-        <Card key={g.cat} title={g.label}>
-          <div className="grid grid-cols-2 gap-2">
-            {settings.integrations.filter((i) => i.category === g.cat).map((i) => (
-              <div key={i.id} className="flex items-center justify-between rounded-lg border border-slate-200 px-3 py-2 dark:border-slate-700">
-                <div>
-                  <div className="text-xs font-semibold text-slate-800 dark:text-slate-100">{i.name}</div>
-                  <div className={`text-[10px] font-medium ${i.connected ? 'text-green-600 dark:text-green-400' : 'text-slate-400'}`}>
-                    {i.connected ? 'Connected' : 'Not connected'}
-                  </div>
-                </div>
-                <button
-                  onClick={() => toggle(i)}
-                  className={`flex items-center gap-1 rounded-md px-2.5 py-1.5 text-[10.5px] font-semibold ${
-                    i.connected
-                      ? 'border border-rose-200 bg-rose-50 text-rose-600 hover:bg-rose-100 dark:border-rose-900/60 dark:bg-rose-900/30 dark:text-rose-300'
-                      : 'bg-brand-500 text-white hover:bg-brand-600'
-                  }`}
-                >
-                  <Power size={11} />
-                  {i.connected ? 'Disconnect' : 'Connect'}
-                </button>
-              </div>
-            ))}
-          </div>
-        </Card>
-      ))}
+      <Card title="About External Integrations">
+        <p className="text-[11px] leading-relaxed text-slate-500 dark:text-slate-400">
+          The ATS runs entirely in your browser, so it can't directly connect to LinkedIn, Indeed, Gmail,
+          Outlook, Google Calendar, Zoom, Teams, or BambooHR — those require server-side OAuth + token
+          storage. The recommended path is to use the <strong>Candidate Intake Webhook</strong> above and
+          wire those services in <code>n8n</code> or <code>Zapier</code>:
+        </p>
+        <ul className="mt-2 list-disc space-y-1 ps-5 text-[11px] text-slate-500 dark:text-slate-400">
+          <li>Intake submitted → webhook fires → n8n posts to Slack, creates a Trello card, writes a row to Google Sheets, etc.</li>
+          <li>n8n on-receive → cron-poll Gmail / Outlook for new resume mail → POST a normalised candidate record to your hosted ATS API.</li>
+          <li>n8n on-schedule → query your candidate list nightly → push reminders to WhatsApp / Email.</li>
+        </ul>
+        <p className="mt-2 text-[11px] leading-relaxed text-slate-500 dark:text-slate-400">
+          If you add a server later, the OAuth integration cards can come back — until then, they're omitted
+          to avoid showing controls that don't do anything.
+        </p>
+      </Card>
     </>
   );
 }

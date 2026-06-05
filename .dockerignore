@@ -1,0 +1,30 @@
+# Keep the build context small + reproducible.
+.git
+.gitignore
+.github
+.idea
+.vscode
+.claude
+.env
+.env.local
+.env.*.local
+
+# Node / build artefacts (rebuilt in stage 1)
+**/node_modules
+**/dist
+**/dist-ssr
+**/.vite
+**/.cache
+**/coverage
+recruitment-ats-dist
+**/tsconfig.tsbuildinfo
+
+# Docs / planning
+ARCHITECTURE.md
+DEPLOY.md
+**/README.md
+
+# Logs / OS
+**/*.log
+**/.DS_Store
+**/Thumbs.db

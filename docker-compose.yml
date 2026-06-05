@@ -1,0 +1,23 @@
+services:
+  ats-app:
+    image: ats-app:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ats-app
+    restart: unless-stopped
+    ports:
+      # Host:Container. Default host port 5174 matches the
+      # nginx-proxy-manager forward (recruitment.erpoman.in → :5174).
+      - "${APP_PORT:-5174}:80"
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1/healthz"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 10s
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"

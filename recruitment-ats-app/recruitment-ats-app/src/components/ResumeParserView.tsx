@@ -1,8 +1,8 @@
-import { useState, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   Upload, Search, FileText, User, Briefcase, GraduationCap,
   Sparkles, FileCode, Mail, Phone, MapPin, Clock,
-  Award, Check, AlertCircle
+  Award, Check, AlertCircle, X
 } from 'lucide-react';
 import type { Candidate, Stage, JobPosting } from '../lib/types';
 import { readFile, parseResume, PROCESSING_STEPS } from '../lib/resumeParser';
@@ -32,7 +32,7 @@ export default function ResumeParserView({
   onUpdateCandidate,
   onToast
 }: ResumeParserViewProps) {
-  const [selectedId, setSelectedId] = useState<string | null>(candidates[0]?.id || null);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
   const [tab, setTab] = useState<Tab>('profile');
   const [search, setSearch] = useState('');
   const [stageFilter, setStageFilter] = useState<Stage | 'all'>('all');
@@ -41,6 +41,24 @@ export default function ResumeParserView({
   const [currentFile, setCurrentFile] = useState('');
   const [dragOver, setDragOver] = useState(false);
   const [editField, setEditField] = useState<string | null>(null);
+  // Session-only queue of IDs parsed in this visit; clears after upload completes.
+  const [sessionIds, setSessionIds] = useState<Set<string>>(new Set());
+  const clearTimerRef = useRef<number | null>(null);
+
+  function clearSession() {
+    if (clearTimerRef.current) {
+      window.clearTimeout(clearTimerRef.current);
+      clearTimerRef.current = null;
+    }
+    setSessionIds(new Set());
+    setSelectedId(null);
+    setTab('profile');
+  }
+
+  // Reset parser view when component unmounts (user navigates away).
+  useEffect(() => () => {
+    if (clearTimerRef.current) window.clearTimeout(clearTimerRef.current);
+  }, []);
   // Bulk-upload progress
   const [bulkProgress, setBulkProgress] = useState<{ current: number; total: number; duplicates: number; added: number }>({
     current: 0, total: 0, duplicates: 0, added: 0
@@ -50,6 +68,7 @@ export default function ResumeParserView({
   const selected = candidates.find((c) => c.id === selectedId);
 
   const filtered = candidates.filter((c) => {
+    if (!sessionIds.has(c.id)) return false; // parser shows only this-session items
     if (stageFilter !== 'all' && c.stage !== stageFilter) return false;
     if (search) {
       const q = search.toLowerCase();
@@ -142,6 +161,12 @@ export default function ResumeParserView({
       workingList = [...workingList, candidate];
       addedCount++;
       setBulkProgress((p) => ({ ...p, added: p.added + 1 }));
+      // Add to this-session queue so the parser list shows it
+      setSessionIds((prev) => {
+        const next = new Set(prev);
+        next.add(candidate.id);
+        return next;
+      });
 
       // For single uploads or last file in bulk, select it
       if (fileList.length === 1 || i === fileList.length - 1) {
@@ -170,6 +195,15 @@ export default function ResumeParserView({
 
     // Clear bulk progress after a delay so user sees the final state
     setTimeout(() => setBulkProgress({ current: 0, total: 0, duplicates: 0, added: 0 }), 4000);
+
+    // Auto-clear the parser session list a few seconds after upload completes,
+    // so the parser becomes a fresh scratchpad for the next batch.
+    if (clearTimerRef.current) window.clearTimeout(clearTimerRef.current);
+    clearTimerRef.current = window.setTimeout(() => {
+      setSessionIds(new Set());
+      setSelectedId(null);
+      clearTimerRef.current = null;
+    }, 3500);
   }
 
   function handleDrop(e: React.DragEvent) {
@@ -341,10 +375,10 @@ export default function ResumeParserView({
             <div className="px-3 py-8 text-center text-slate-400">
               <FileText size={28} className="mx-auto mb-2 opacity-40" />
               <div className="text-[11px] font-semibold text-slate-500">
-                {candidates.length ? 'No matches' : 'No candidates yet'}
+                {sessionIds.size ? 'No matches' : 'Ready for upload'}
               </div>
               <div className="mt-1 text-[10px]">
-                {candidates.length ? 'Try a different filter' : 'Upload resumes above'}
+                {sessionIds.size ? 'Try a different filter' : 'Drop resumes above — parsed items appear here, then move to Candidates'}
               </div>
             </div>
           ) : (
@@ -398,16 +432,25 @@ export default function ResumeParserView({
           )}
         </div>
 
-        {/* Upload All — bulk file picker */}
-        <div className="border-t border-slate-100 p-3">
+        {/* Upload All — bulk file picker + Clear */}
+        <div className="border-t border-slate-100 p-3 flex gap-2">
           <button
             onClick={triggerBulkUpload}
             disabled={busy}
-            className="flex w-full items-center justify-center gap-1.5 rounded-lg border border-blue-200 bg-blue-50 py-1.5 text-[11px] font-semibold text-brand-500 hover:bg-blue-100 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex flex-1 items-center justify-center gap-1.5 rounded-lg border border-blue-200 bg-blue-50 py-1.5 text-[11px] font-semibold text-brand-500 hover:bg-blue-100 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <Upload size={12} />
-            {busy ? 'Parsing…' : `Upload All${candidates.length > 0 ? ` (${candidates.length} parsed)` : ''}`}
+            {busy ? 'Parsing…' : sessionIds.size > 0 ? `Add More (${sessionIds.size} parsed)` : 'Upload Resumes'}
           </button>
+          {sessionIds.size > 0 && !busy && (
+            <button
+              onClick={clearSession}
+              title="Clear this batch — candidates remain saved in Candidates view"
+              className="flex items-center justify-center gap-1 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-[11px] font-semibold text-slate-600 hover:bg-slate-50"
+            >
+              <X size={12} /> Clear
+            </button>
+          )}
         </div>
       </div>
 

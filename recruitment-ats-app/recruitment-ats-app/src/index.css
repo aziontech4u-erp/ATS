@@ -59,3 +59,46 @@ html.dark .spinner { border-color: #1e293b; border-top-color: #60a5fa; }
 
 /* RTL flip for horizontal-only utility icons */
 html[dir="rtl"] .rtl-flip { transform: scaleX(-1); }
+
+/* ──────────────────────────────────────────────────────────────────
+ * Global text overrides — applied app-wide
+ *
+ * 1. Bump every text size by ~2 steps for higher legibility. Tailwind's
+ *    sized utilities AND arbitrary-value sizes used in the codebase are
+ *    overridden with !important so the override beats utility order.
+ *
+ * 2. Map every light-mode slate text shade to a dark blue so all the
+ *    grey body text reads as dark blue. Scoped via :where(html:not(.dark))
+ *    so dark mode keeps its slate palette and remains readable.
+ * ────────────────────────────────────────────────────────────────── */
+
+/* ─── 1. Font size bumps (apply to both light & dark) ─── */
+.text-\[8px\]     { font-size: 12px   !important; line-height: 16px   !important; }
+.text-\[9px\]     { font-size: 13px   !important; line-height: 18px   !important; }
+.text-\[9\.5px\]  { font-size: 13.5px !important; line-height: 18px   !important; }
+.text-\[10px\]    { font-size: 14px   !important; line-height: 20px   !important; }
+.text-\[10\.5px\] { font-size: 14.5px !important; line-height: 20px   !important; }
+.text-\[11px\]    { font-size: 15px   !important; line-height: 21px   !important; }
+.text-\[11\.5px\] { font-size: 15.5px !important; line-height: 21px   !important; }
+.text-\[15px\]    { font-size: 18px   !important; line-height: 26px   !important; }
+.text-xs   { font-size: 1rem      !important; line-height: 1.5rem   !important; }   /* 16px */
+.text-sm   { font-size: 1.125rem  !important; line-height: 1.75rem  !important; }   /* 18px */
+.text-base { font-size: 1.25rem   !important; line-height: 1.875rem !important; }   /* 20px */
+.text-lg   { font-size: 1.5rem    !important; line-height: 2rem     !important; }   /* 24px */
+.text-xl   { font-size: 1.875rem  !important; line-height: 2.25rem  !important; }   /* 30px */
+.text-2xl  { font-size: 2.25rem   !important; line-height: 2.5rem   !important; }   /* 36px */
+.text-3xl  { font-size: 2.5rem    !important; line-height: 1        !important; }   /* 40px */
+
+/* ─── 2. Gray → dark blue, light mode only ─── */
+:where(html:not(.dark)) .text-slate-300,
+:where(html:not(.dark)) .text-slate-400 { color: #1d4ed8 !important; }  /* blue-700 */
+
+:where(html:not(.dark)) .text-slate-500,
+:where(html:not(.dark)) .text-slate-600 { color: #1e40af !important; }  /* blue-800 */
+
+:where(html:not(.dark)) .text-slate-700,
+:where(html:not(.dark)) .text-slate-800,
+:where(html:not(.dark)) .text-slate-900 { color: #172554 !important; }  /* blue-950 */
+
+/* Body inherits the same dark-blue tone so default text reads on-brand */
+html:not(.dark) body { color: #172554; }

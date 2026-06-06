@@ -7,6 +7,7 @@ import type { Candidate, JobPosting, Stage } from '../lib/types';
 import { searchCandidates, EMPTY_FILTERS, type SearchFilters } from '../lib/search';
 import { stageColors, avatarColor, getInitials, scoreColor } from '../lib/utils';
 import NationalityAutocomplete from './NationalityAutocomplete';
+import { useUi } from '../lib/uiContext';
 
 interface AdvancedSearchProps {
   candidates: Candidate[];
@@ -19,6 +20,7 @@ export default function AdvancedSearch({
   jobs,
   onViewCandidate
 }: AdvancedSearchProps) {
+  const { t } = useUi();
   const [filters, setFilters] = useState<SearchFilters>(EMPTY_FILTERS);
   const [skillInput, setSkillInput] = useState('');
   const [openSections, setOpenSections] = useState<Record<string, boolean>>({
@@ -98,7 +100,7 @@ export default function AdvancedSearch({
           <div className="flex items-center gap-2">
             <Filter size={14} className="text-brand-500 dark:text-blue-300" />
             <span className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-200">
-              Filters
+              {t('cand.filters')}
             </span>
             {activeFilterCount > 0 && (
               <span className="rounded-full bg-brand-500 px-2 py-0.5 text-[10px] font-bold text-white">
@@ -111,7 +113,7 @@ export default function AdvancedSearch({
               onClick={resetFilters}
               className="text-[10px] font-semibold text-rose-500 hover:underline dark:text-rose-400"
             >
-              Reset
+              {t('search.reset')}
             </button>
           )}
         </div>
@@ -119,7 +121,7 @@ export default function AdvancedSearch({
         <div className="flex-1 overflow-y-auto p-3 space-y-1">
           {/* ── Skills ── */}
           <FilterSection
-            title="Skills"
+            title={t('search.section.skills')}
             isOpen={openSections.skills}
             onToggle={() => setOpenSections({ ...openSections, skills: !openSections.skills })}
             badge={filters.skills.length}
@@ -133,7 +135,7 @@ export default function AdvancedSearch({
                   onKeyDown={(e) => {
                     if (e.key === 'Enter') addSkill(skillInput);
                   }}
-                  placeholder="Add skill, press Enter"
+                  placeholder={t('search.skillsPlaceholder')}
                   className="flex-1 bg-transparent text-[11px] outline-none dark:text-slate-100"
                 />
                 {skillInput && (
@@ -141,7 +143,7 @@ export default function AdvancedSearch({
                     onClick={() => addSkill(skillInput)}
                     className="text-[10px] font-semibold text-brand-500 dark:text-blue-300"
                   >
-                    Add
+                    {t('search.addBtn')}
                   </button>
                 )}
               </div>
@@ -172,13 +174,13 @@ export default function AdvancedSearch({
                   className="rounded border-slate-300 accent-brand-500"
                 />
                 <Sparkles size={10} className="text-purple-500" />
-                Semantic match (Java ≈ Spring Boot)
+                {t('search.semantic')}
               </label>
 
               {topSkills.length > 0 && (
                 <div>
                   <div className="mb-1 text-[9px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
-                    Popular skills
+                    {t('search.popularSkills')}
                   </div>
                   <div className="flex flex-wrap gap-1">
                     {topSkills.slice(0, 12).map(([s, n]) => {
@@ -205,30 +207,30 @@ export default function AdvancedSearch({
 
           {/* ── Demographics ── */}
           <FilterSection
-            title="Demographics"
+            title={t('search.section.demographics')}
             isOpen={openSections.demographics}
             onToggle={() => setOpenSections({ ...openSections, demographics: !openSections.demographics })}
             badge={(filters.nationality ? 1 : 0) + (filters.gender ? 1 : 0) + (filters.omanizationOnly ? 1 : 0)}
           >
             <div className="space-y-2">
-              <FilterField label="Nationality">
+              <FilterField label={t('search.field.nationality')}>
                 <NationalityAutocomplete
                   value={filters.nationality}
                   onChange={(v) => setFilters({ ...filters, nationality: v })}
                   extras={allNationalities}
-                  placeholder="Any"
+                  placeholder={t('search.gender.any')}
                 />
               </FilterField>
-              <FilterField label="Gender">
+              <FilterField label={t('search.field.gender')}>
                 <select
                   value={filters.gender}
                   onChange={(e) => setFilters({ ...filters, gender: e.target.value })}
                   className="w-full rounded border border-slate-200 px-2 py-1 text-[11px] outline-none focus:border-brand-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
                 >
-                  <option value="">Any</option>
-                  <option value="Male">Male</option>
-                  <option value="Female">Female</option>
-                  <option value="Other">Other</option>
+                  <option value="">{t('search.gender.any')}</option>
+                  <option value="Male">{t('search.gender.male')}</option>
+                  <option value="Female">{t('search.gender.female')}</option>
+                  <option value="Other">{t('search.gender.other')}</option>
                 </select>
               </FilterField>
               <label className="flex items-center gap-1.5 text-[10px] font-medium text-slate-600 cursor-pointer dark:text-slate-300 pt-1">
@@ -240,21 +242,21 @@ export default function AdvancedSearch({
                   }
                   className="rounded border-slate-300 accent-brand-500"
                 />
-                🇴🇲 Omanization-eligible only
+                {t('search.omanizationOnly')}
               </label>
             </div>
           </FilterSection>
 
           {/* ── Experience & Role ── */}
           <FilterSection
-            title="Experience & Role"
+            title={t('search.section.experience')}
             isOpen={openSections.experience}
             onToggle={() => setOpenSections({ ...openSections, experience: !openSections.experience })}
             badge={(filters.expMin != null ? 1 : 0) + (filters.expMax != null ? 1 : 0) + (filters.role ? 1 : 0) + (filters.location ? 1 : 0)}
           >
             <div className="space-y-2">
               <div className="grid grid-cols-2 gap-2">
-                <FilterField label="Min years">
+                <FilterField label={t('search.field.minYears')}>
                   <input
                     type="number"
                     value={filters.expMin ?? ''}
@@ -268,7 +270,7 @@ export default function AdvancedSearch({
                     className="w-full rounded border border-slate-200 px-2 py-1 text-[11px] outline-none focus:border-brand-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
                   />
                 </FilterField>
-                <FilterField label="Max years">
+                <FilterField label={t('search.field.maxYears')}>
                   <input
                     type="number"
                     value={filters.expMax ?? ''}
@@ -283,19 +285,19 @@ export default function AdvancedSearch({
                   />
                 </FilterField>
               </div>
-              <FilterField label="Current Role / Title">
+              <FilterField label={t('search.field.role')}>
                 <input
                   value={filters.role}
                   onChange={(e) => setFilters({ ...filters, role: e.target.value })}
-                  placeholder="e.g. engineer, manager"
+                  placeholder={t('search.field.rolePh')}
                   className="w-full rounded border border-slate-200 px-2 py-1 text-[11px] outline-none focus:border-brand-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
                 />
               </FilterField>
-              <FilterField label="Location">
+              <FilterField label={t('search.field.location')}>
                 <input
                   value={filters.location}
                   onChange={(e) => setFilters({ ...filters, location: e.target.value })}
-                  placeholder="e.g. Muscat, Mumbai"
+                  placeholder={t('search.field.locationPh')}
                   className="w-full rounded border border-slate-200 px-2 py-1 text-[11px] outline-none focus:border-brand-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
                 />
               </FilterField>
@@ -304,13 +306,13 @@ export default function AdvancedSearch({
 
           {/* ── Pipeline ── */}
           <FilterSection
-            title="Pipeline"
+            title={t('search.section.pipeline')}
             isOpen={openSections.pipeline}
             onToggle={() => setOpenSections({ ...openSections, pipeline: !openSections.pipeline })}
             badge={filters.stages.length + (filters.scoreMin != null ? 1 : 0)}
           >
             <div className="space-y-2">
-              <FilterField label="Stages (multi-select)">
+              <FilterField label={t('search.field.stages')}>
                 <div className="flex flex-wrap gap-1">
                   {(['applied', 'screening', 'interview', 'offer', 'hired', 'rejected'] as Stage[]).map((s) => {
                     const style = stageColors(s);
@@ -326,13 +328,13 @@ export default function AdvancedSearch({
                             : { background: style.bg, color: style.fg }
                         }
                       >
-                        {style.label}
+                        {t('stage.' + s)}
                       </button>
                     );
                   })}
                 </div>
               </FilterField>
-              <FilterField label="Min AI Score">
+              <FilterField label={t('search.field.scoreMin')}>
                 <input
                   type="number"
                   min={0} max={100}
@@ -343,7 +345,7 @@ export default function AdvancedSearch({
                       scoreMin: e.target.value === '' ? null : parseInt(e.target.value)
                     })
                   }
-                  placeholder="0-100"
+                  placeholder={t('search.scorePh')}
                   className="w-full rounded border border-slate-200 px-2 py-1 text-[11px] outline-none focus:border-brand-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
                 />
               </FilterField>
@@ -362,7 +364,7 @@ export default function AdvancedSearch({
               <input
                 value={filters.query}
                 onChange={(e) => setFilters({ ...filters, query: e.target.value })}
-                placeholder='Search... e.g.  python AND (django OR flask) NOT junior'
+                placeholder={t('search.queryPlaceholder')}
                 className="flex-1 bg-transparent text-xs outline-none dark:text-slate-100"
               />
               {filters.query && (
@@ -379,11 +381,7 @@ export default function AdvancedSearch({
             </div>
           </div>
           <div className="mt-1.5 text-[10px] text-slate-500 dark:text-slate-400">
-            Tip: Use <code className="rounded bg-slate-100 px-1 font-mono dark:bg-slate-800">AND</code>{' '}
-            <code className="rounded bg-slate-100 px-1 font-mono dark:bg-slate-800">OR</code>{' '}
-            <code className="rounded bg-slate-100 px-1 font-mono dark:bg-slate-800">NOT</code>, parens{' '}
-            <code className="rounded bg-slate-100 px-1 font-mono dark:bg-slate-800">()</code>, and quotes{' '}
-            <code className="rounded bg-slate-100 px-1 font-mono dark:bg-slate-800">"phrase"</code>
+            {t('search.tip')}
           </div>
         </div>
 
@@ -393,10 +391,10 @@ export default function AdvancedSearch({
             <div className="rounded-xl border border-blue-100 bg-white py-16 text-center dark:border-slate-800 dark:bg-slate-900">
               <AlertCircle size={40} className="mx-auto mb-3 text-slate-300 dark:text-slate-600" />
               <div className="text-sm font-semibold text-slate-500 dark:text-slate-300">
-                {candidates.length === 0 ? 'No candidates in system' : 'No matches found'}
+                {candidates.length === 0 ? t('search.empty.none') : t('search.empty.noMatch')}
               </div>
               <p className="mt-1 text-xs text-slate-400 dark:text-slate-500">
-                {activeFilterCount > 0 ? 'Try removing some filters' : 'Adjust your search query'}
+                {activeFilterCount > 0 ? t('search.empty.removeFilters') : t('search.empty.adjustQuery')}
               </p>
             </div>
           ) : (
@@ -449,14 +447,14 @@ export default function AdvancedSearch({
                               >
                                 {c.ai_score}%
                               </div>
-                              <div className="text-[9px] text-slate-400 dark:text-slate-500">AI score</div>
+                              <div className="text-[9px] text-slate-400 dark:text-slate-500">{t('search.aiScore')}</div>
                             </div>
                             <div className="h-8 w-0.5 bg-slate-100 dark:bg-slate-700" />
                             <div className="text-right">
                               <div className="text-sm font-bold text-purple-600 dark:text-purple-300">
                                 {Math.round(r.score * 100)}%
                               </div>
-                              <div className="text-[9px] text-slate-400 dark:text-slate-500">relevance</div>
+                              <div className="text-[9px] text-slate-400 dark:text-slate-500">{t('search.relevance')}</div>
                             </div>
                           </div>
                         </div>
@@ -490,7 +488,7 @@ export default function AdvancedSearch({
                               className="rounded-full px-2 py-0.5 text-[10px] font-semibold"
                               style={{ background: style.bg, color: style.fg }}
                             >
-                              {style.label}
+                              {t('stage.' + c.stage)}
                             </span>
                             {job && (
                               <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-medium text-slate-600 dark:bg-slate-800 dark:text-slate-300">
@@ -499,7 +497,7 @@ export default function AdvancedSearch({
                             )}
                             {c.omanization_eligible && (
                               <span className="rounded-full bg-teal-50 px-2 py-0.5 text-[10px] font-semibold text-teal-700 dark:bg-teal-900/30 dark:text-teal-300">
-                                🇴🇲 Eligible
+                                {t('search.omanizationChip')}
                               </span>
                             )}
                           </div>
@@ -510,7 +508,7 @@ export default function AdvancedSearch({
                             }}
                             className="flex items-center gap-1 rounded p-1 text-slate-500 hover:bg-blue-50 hover:text-brand-500 text-[10px] dark:text-slate-400 dark:hover:bg-blue-900/30 dark:hover:text-blue-300"
                           >
-                            <Eye size={11} /> View
+                            <Eye size={11} /> {t('search.view')}
                           </button>
                         </div>
                       </div>

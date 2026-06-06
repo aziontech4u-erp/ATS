@@ -104,7 +104,7 @@ export default function ReportsView({ candidates, jobs, interviews, offers }: Pr
           {role === 'admin' && (
             <button
               onClick={() => setManaging(true)}
-              title="Manage reports"
+              title={t('reports.manageTip')}
               className="rounded p-1 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800"
             >
               <Settings2 size={14} />
@@ -195,9 +195,9 @@ export default function ReportsView({ candidates, jobs, interviews, offers }: Pr
             </FilterSelect>
             <FilterSelect value={filters.gender} onChange={(v) => setFilter('gender', v)}>
               <option value="">{t('reports.filter.allGenders')}</option>
-              <option value="Male">Male</option>
-              <option value="Female">Female</option>
-              <option value="Other">Other</option>
+              <option value="Male">{t('reports.gender.male')}</option>
+              <option value="Female">{t('reports.gender.female')}</option>
+              <option value="Other">{t('reports.gender.other')}</option>
             </FilterSelect>
             <FilterSelect value={filters.skill} onChange={(v) => setFilter('skill', v)}>
               <option value="">{t('reports.filter.allSkills')}</option>
@@ -340,6 +340,7 @@ function ManageReportsModal({
   onClose: () => void;
   role: ReportRole;
 }) {
+  const { t } = useUi();
   const grouped = useMemo(() => {
     const map = new Map<string, ReportDef[]>();
     REPORT_DEFS.forEach((r) => {
@@ -355,9 +356,9 @@ function ManageReportsModal({
       <div className="flex max-h-[85vh] w-full max-w-2xl flex-col rounded-xl bg-white shadow-2xl dark:bg-slate-900">
         <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4 dark:border-slate-800">
           <div>
-            <div className="text-sm font-bold text-slate-900 dark:text-slate-100">Manage Reports</div>
+            <div className="text-sm font-bold text-slate-900 dark:text-slate-100">{t('reports.manageTitle')}</div>
             <div className="text-[11px] text-slate-500 dark:text-slate-400">
-              Enable or disable reports. Disabled reports are hidden from all users.
+              {t('reports.manageSub')}
             </div>
           </div>
           <button onClick={onClose} className="text-slate-400 hover:text-slate-700 dark:hover:text-slate-200">
@@ -367,7 +368,7 @@ function ManageReportsModal({
         <div className="flex-1 overflow-y-auto p-5">
           {role !== 'admin' && (
             <div className="mb-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-[11px] text-amber-800 dark:border-amber-900/60 dark:bg-amber-900/20 dark:text-amber-300">
-              Read-only — only Admin role can toggle reports.
+              {t('reports.adminOnly')}
             </div>
           )}
           {grouped.map(([cat, defs]) => (
@@ -383,7 +384,7 @@ function ManageReportsModal({
                       <div className="min-w-0 flex-1">
                         <div className="truncate text-xs font-semibold text-slate-800 dark:text-slate-100">{d.name}</div>
                         <div className="truncate text-[10.5px] text-slate-500 dark:text-slate-400">{d.description}</div>
-                        <div className="mt-0.5 text-[9.5px] uppercase tracking-wider text-slate-400">Roles: {d.roles.join(', ')}</div>
+                        <div className="mt-0.5 text-[9.5px] uppercase tracking-wider text-slate-400">{t('reports.rolesPrefix')} {d.roles.join(', ')}</div>
                       </div>
                       <span
                         onClick={() => role === 'admin' && onToggle(d.id, !on)}
@@ -402,7 +403,7 @@ function ManageReportsModal({
           <button
             onClick={onClose}
             className="rounded-lg border border-slate-200 px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
-          >Close</button>
+          >{t('common.close')}</button>
         </div>
       </div>
     </div>

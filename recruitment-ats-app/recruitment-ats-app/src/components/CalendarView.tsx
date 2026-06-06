@@ -20,7 +20,7 @@ interface Props {
   interviews: Interview[];
 }
 
-const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+const WEEKDAY_KEYS = ['wd.sun', 'wd.mon', 'wd.tue', 'wd.wed', 'wd.thu', 'wd.fri', 'wd.sat'];
 
 export default function CalendarView({ candidates, jobs, interviews }: Props) {
   const { t } = useUi();
@@ -133,8 +133,8 @@ export default function CalendarView({ candidates, jobs, interviews }: Props) {
 
         {/* Weekday header */}
         <div className="grid grid-cols-7 border-b border-blue-100 bg-white text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-400">
-          {WEEKDAYS.map((w) => (
-            <div key={w} className="px-2 py-1.5 text-center">{w}</div>
+          {WEEKDAY_KEYS.map((k) => (
+            <div key={k} className="px-2 py-1.5 text-center">{t(k)}</div>
           ))}
         </div>
 
@@ -244,6 +244,7 @@ function EventRow({
   onEdit: (r: CalendarReminder) => void;
   onRemove: (id: string) => void;
 }) {
+  const { t } = useUi();
   const candidate = e.candidateId ? candidates.find((c) => c.id === e.candidateId) : null;
   const job = e.jobId ? jobs.find((j) => j.id === e.jobId) : null;
   const isReminder = e.kind === 'reminder';
@@ -262,7 +263,7 @@ function EventRow({
               isReminder ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300'
                 : 'bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300'
             }`}>
-              {isReminder ? (e.raw as CalendarReminder).kind.replace('_', ' ') : 'Interview'}
+              {isReminder ? t('cal.kind.' + (e.raw as CalendarReminder).kind) : t('cal.kindInterview')}
             </span>
           </div>
           <div className={`mt-0.5 truncate font-semibold text-slate-800 dark:text-slate-100 ${e.done ? 'line-through' : ''}`}>{e.title}</div>
@@ -304,6 +305,7 @@ function ReminderModal({
   onClose: () => void;
   onSave: (r: CalendarReminder) => void;
 }) {
+  const { t } = useUi();
   const [title, setTitle] = useState(initial?.title || '');
   const [date, setDate] = useState(initial?.date || defaultDate);
   const [time, setTime] = useState(initial?.time || '');
@@ -332,42 +334,42 @@ function ReminderModal({
     <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/40 p-4 fade-in">
       <div className="flex max-h-[85vh] w-full max-w-md flex-col rounded-xl bg-white shadow-2xl dark:bg-slate-900">
         <div className="flex items-center justify-between border-b border-slate-100 px-5 py-3 dark:border-slate-800">
-          <div className="text-sm font-bold text-slate-900 dark:text-slate-100">{initial ? 'Edit Reminder' : 'New Reminder'}</div>
+          <div className="text-sm font-bold text-slate-900 dark:text-slate-100">{initial ? t('cal.modal.edit') : t('cal.modal.new')}</div>
           <button onClick={onClose} className="text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"><X size={18} /></button>
         </div>
         <div className="space-y-3 overflow-y-auto p-5">
-          <Fld label="Title *"><input value={title} onChange={(e) => setTitle(e.target.value)} className={ipt} placeholder="e.g. Call back Jane re: offer" /></Fld>
+          <Fld label={t('cal.field.title')}><input value={title} onChange={(e) => setTitle(e.target.value)} className={ipt} /></Fld>
           <div className="grid grid-cols-2 gap-3">
-            <Fld label="Date *"><input type="date" value={date} onChange={(e) => setDate(e.target.value)} className={`${ipt} dark:[color-scheme:dark]`} /></Fld>
-            <Fld label="Time"><input type="time" value={time} onChange={(e) => setTime(e.target.value)} className={`${ipt} dark:[color-scheme:dark]`} /></Fld>
+            <Fld label={t('cal.field.date')}><input type="date" value={date} onChange={(e) => setDate(e.target.value)} className={`${ipt} dark:[color-scheme:dark]`} /></Fld>
+            <Fld label={t('cal.field.time')}><input type="time" value={time} onChange={(e) => setTime(e.target.value)} className={`${ipt} dark:[color-scheme:dark]`} /></Fld>
           </div>
-          <Fld label="Kind">
+          <Fld label={t('cal.field.kind')}>
             <select value={kind} onChange={(e) => setKind(e.target.value as CalendarReminderKind)} className={ipt}>
-              <option value="reminder">Reminder</option>
-              <option value="follow_up">Follow-up</option>
-              <option value="task">Task</option>
-              <option value="other">Other</option>
+              <option value="reminder">{t('cal.kind.reminder')}</option>
+              <option value="follow_up">{t('cal.kind.follow_up')}</option>
+              <option value="task">{t('cal.kind.task')}</option>
+              <option value="other">{t('cal.kind.other')}</option>
             </select>
           </Fld>
           <div className="grid grid-cols-2 gap-3">
-            <Fld label="Candidate">
+            <Fld label={t('cal.field.candidate')}>
               <select value={candidateId} onChange={(e) => setCandidateId(e.target.value)} className={ipt}>
-                <option value="">— None —</option>
+                <option value="">{t('cal.none')}</option>
                 {candidates.map((c) => <option key={c.id} value={c.id}>{c.personal.full_name || c.personal.email || c.id}</option>)}
               </select>
             </Fld>
-            <Fld label="Job">
+            <Fld label={t('cal.field.job')}>
               <select value={jobId} onChange={(e) => setJobId(e.target.value)} className={ipt}>
-                <option value="">— None —</option>
+                <option value="">{t('cal.none')}</option>
                 {jobs.map((j) => <option key={j.id} value={j.id}>{j.title}</option>)}
               </select>
             </Fld>
           </div>
-          <Fld label="Notes"><textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={3} className={`${ipt} resize-y`} placeholder="Optional details…" /></Fld>
+          <Fld label={t('cal.field.notes')}><textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={3} className={`${ipt} resize-y`} /></Fld>
         </div>
         <div className="flex justify-end gap-2 border-t border-slate-100 px-5 py-3 dark:border-slate-800">
-          <button onClick={onClose} className="rounded-lg border border-slate-200 px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800">Cancel</button>
-          <button onClick={save} className="rounded-lg bg-brand-500 px-4 py-2 text-xs font-semibold text-white hover:bg-brand-600">{initial ? 'Save' : 'Add'}</button>
+          <button onClick={onClose} className="rounded-lg border border-slate-200 px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800">{t('common.cancel')}</button>
+          <button onClick={save} className="rounded-lg bg-brand-500 px-4 py-2 text-xs font-semibold text-white hover:bg-brand-600">{initial ? t('common.save') : t('cal.add')}</button>
         </div>
       </div>
     </div>

@@ -81,6 +81,11 @@ function blankCandidate(): Candidate {
     visa_status: '',
     notice_period: '',
     expected_salary: '',
+    current_salary: '',
+    availability: '',
+    confirm_relocate_oman: false,
+    confirm_gcc_experience: false,
+    confirm_valid_passport: false,
     ai_score: 50,
     ai_strengths: [],
     ai_concerns: [],
@@ -1154,7 +1159,7 @@ function CandidateModal({
           {tab === 'professional' && (
             <div className="space-y-3">
               <div className="grid grid-cols-2 gap-3">
-                <Field label="Current Title" readOnly={readOnly}>
+                <Field label={t('field.currentTitle')} readOnly={readOnly}>
                   <Input
                     value={draft.current_title}
                     onChange={(v) => updateField('current_title', v)}
@@ -1162,7 +1167,7 @@ function CandidateModal({
                     placeholder="Senior Engineer"
                   />
                 </Field>
-                <Field label="Experience (Years)" readOnly={readOnly}>
+                <Field label={t('field.expYears')} readOnly={readOnly}>
                   <Input
                     value={String(draft.total_experience_years)}
                     onChange={(v) => updateField('total_experience_years', parseInt(v) || 0)}
@@ -1171,7 +1176,15 @@ function CandidateModal({
                     placeholder="5"
                   />
                 </Field>
-                <Field label="Expected Salary" readOnly={readOnly}>
+                <Field label={t('field.currentSalary')} readOnly={readOnly}>
+                  <Input
+                    value={draft.current_salary || ''}
+                    onChange={(v) => updateField('current_salary', v)}
+                    readOnly={readOnly}
+                    placeholder="OMR 1000"
+                  />
+                </Field>
+                <Field label={t('field.expectedSalary')} readOnly={readOnly}>
                   <Input
                     value={draft.expected_salary}
                     onChange={(v) => updateField('expected_salary', v)}
@@ -1179,7 +1192,7 @@ function CandidateModal({
                     placeholder="OMR 1500"
                   />
                 </Field>
-                <Field label="Notice Period" readOnly={readOnly}>
+                <Field label={t('field.noticePeriod')} readOnly={readOnly}>
                   <Input
                     value={draft.notice_period}
                     onChange={(v) => updateField('notice_period', v)}
@@ -1187,15 +1200,15 @@ function CandidateModal({
                     placeholder="30 days"
                   />
                 </Field>
-                <Field label="Visa Status" readOnly={readOnly}>
+                <Field label={t('field.availability')} readOnly={readOnly}>
                   <Input
-                    value={draft.visa_status}
-                    onChange={(v) => updateField('visa_status', v)}
+                    value={draft.availability || ''}
+                    onChange={(v) => updateField('availability', v)}
                     readOnly={readOnly}
-                    placeholder="Resident / Sponsored / Free Visa"
+                    placeholder="Weekdays after 5pm"
                   />
                 </Field>
-                <Field label="Source" readOnly={readOnly}>
+                <Field label={t('field.source')} readOnly={readOnly}>
                   {readOnly ? (
                     <Input value={draft.source} readOnly />
                   ) : (
@@ -1214,7 +1227,7 @@ function CandidateModal({
                     </select>
                   )}
                 </Field>
-                <Field label="Stage" readOnly={readOnly}>
+                <Field label={t('field.stage')} readOnly={readOnly}>
                   {readOnly ? (
                     <Input value={draft.stage} readOnly />
                   ) : (
@@ -1232,7 +1245,7 @@ function CandidateModal({
                     </select>
                   )}
                 </Field>
-                <Field label="Job Linked" readOnly={readOnly}>
+                <Field label={t('field.jobLinked')} readOnly={readOnly}>
                   {readOnly ? (
                     <Input value={jobs.find((j) => j.id === draft.jobId)?.title || ''} readOnly />
                   ) : (
@@ -1248,7 +1261,7 @@ function CandidateModal({
                     </select>
                   )}
                 </Field>
-                <Field label="AI Score (0-100)" readOnly={readOnly}>
+                <Field label={t('field.aiScore')} readOnly={readOnly}>
                   <Input
                     value={String(draft.ai_score)}
                     onChange={(v) => updateField('ai_score', Math.max(0, Math.min(100, parseInt(v) || 0)))}
@@ -1257,7 +1270,7 @@ function CandidateModal({
                     placeholder="50"
                   />
                 </Field>
-                <Field label="Omanization Eligible" readOnly={readOnly}>
+                <Field label={t('field.omanization')} readOnly={readOnly}>
                   {readOnly ? (
                     <Input value={draft.omanization_eligible ? 'Yes' : 'No'} readOnly />
                   ) : (
@@ -1272,7 +1285,32 @@ function CandidateModal({
                   )}
                 </Field>
               </div>
-              <Field label="Professional Summary" readOnly={readOnly}>
+
+              {/* Confirmation block — mirrors the intake form's required confirmations */}
+              <Field label={t('field.confirmation')} readOnly={readOnly}>
+                <div className="space-y-1.5 rounded-lg border border-slate-200 bg-slate-50 p-3 dark:border-slate-700 dark:bg-slate-800/50">
+                  <ConfirmCheckbox
+                    label={t('field.confirmRelocate')}
+                    checked={!!draft.confirm_relocate_oman}
+                    onChange={(v) => updateField('confirm_relocate_oman', v)}
+                    readOnly={readOnly}
+                  />
+                  <ConfirmCheckbox
+                    label={t('field.confirmGcc')}
+                    checked={!!draft.confirm_gcc_experience}
+                    onChange={(v) => updateField('confirm_gcc_experience', v)}
+                    readOnly={readOnly}
+                  />
+                  <ConfirmCheckbox
+                    label={t('field.confirmPassport')}
+                    checked={!!draft.confirm_valid_passport}
+                    onChange={(v) => updateField('confirm_valid_passport', v)}
+                    readOnly={readOnly}
+                  />
+                </div>
+              </Field>
+
+              <Field label={t('field.summary')} readOnly={readOnly}>
                 <TextArea
                   value={draft.professional_summary}
                   onChange={(v) => updateField('professional_summary', v)}
@@ -1462,6 +1500,28 @@ function TextArea({
       rows={rows}
       className="w-full rounded-lg border border-slate-200 px-3 py-2 text-xs outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 resize-y"
     />
+  );
+}
+
+function ConfirmCheckbox({
+  label, checked, onChange, readOnly
+}: { label: string; checked: boolean; onChange: (v: boolean) => void; readOnly?: boolean }) {
+  return (
+    <label className={`flex items-center gap-2 rounded-md px-2 py-1 text-xs ${readOnly ? '' : 'cursor-pointer hover:bg-white dark:hover:bg-slate-800/60'}`}>
+      <input
+        type="checkbox"
+        checked={checked}
+        onChange={(e) => onChange(e.target.checked)}
+        disabled={readOnly}
+        className="h-3.5 w-3.5 accent-brand-500 disabled:opacity-60"
+      />
+      <span className={`flex-1 ${checked ? 'font-semibold text-slate-800 dark:text-slate-100' : 'text-slate-600 dark:text-slate-300'}`}>{label}</span>
+      <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold uppercase ${
+        checked
+          ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300'
+          : 'bg-slate-100 text-slate-500 dark:bg-slate-700 dark:text-slate-400'
+      }`}>{checked ? 'Yes' : 'No'}</span>
+    </label>
   );
 }
 

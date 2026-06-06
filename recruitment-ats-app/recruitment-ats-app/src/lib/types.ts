@@ -119,6 +119,14 @@ export interface Candidate extends ParsedResume {
   rating?: number;      // 0-5 manual rating
   intake?: IntakeData;  // Present when candidate completed the intake form
   intakeRequestedAt?: string; // ISO timestamp when invite was last sent
+
+  // ─── Intake-form parity fields (mirrored from intake when present,
+  // and editable in the Professional tab) ───
+  current_salary?: string;
+  availability?: string;
+  confirm_relocate_oman?: boolean;
+  confirm_gcc_experience?: boolean;
+  confirm_valid_passport?: boolean;
 }
 
 export interface JobPosting {

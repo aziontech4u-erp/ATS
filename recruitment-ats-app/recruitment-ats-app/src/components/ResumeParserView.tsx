@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import {
   Upload, Search, FileText, User, Briefcase, GraduationCap,
   Sparkles, FileCode, Mail, Phone, MapPin, Clock,
@@ -43,24 +43,15 @@ export default function ResumeParserView({
   const [currentFile, setCurrentFile] = useState('');
   const [dragOver, setDragOver] = useState(false);
   const [editField, setEditField] = useState<string | null>(null);
-  // Session-only queue of IDs parsed in this visit; clears after upload completes.
+  // Session-only queue of IDs parsed in this visit. No auto-clear — the
+  // recruiter explicitly hits "Clear All" below when they're done.
   const [sessionIds, setSessionIds] = useState<Set<string>>(new Set());
-  const clearTimerRef = useRef<number | null>(null);
 
   function clearSession() {
-    if (clearTimerRef.current) {
-      window.clearTimeout(clearTimerRef.current);
-      clearTimerRef.current = null;
-    }
     setSessionIds(new Set());
     setSelectedId(null);
     setTab('profile');
   }
-
-  // Reset parser view when component unmounts (user navigates away).
-  useEffect(() => () => {
-    if (clearTimerRef.current) window.clearTimeout(clearTimerRef.current);
-  }, []);
   // Bulk-upload progress
   const [bulkProgress, setBulkProgress] = useState<{ current: number; total: number; duplicates: number; added: number }>({
     current: 0, total: 0, duplicates: 0, added: 0
@@ -195,17 +186,10 @@ export default function ResumeParserView({
       onToast(msgParts.join(' · '), duplicatesSkipped > 0 ? 'info' : 'success');
     }
 
-    // Clear bulk progress after a delay so user sees the final state
+    // Clear bulk progress after a delay so user sees the final state.
+    // Note: parsed items persist in the list until the user explicitly hits
+    // the "Clear All" button below.
     setTimeout(() => setBulkProgress({ current: 0, total: 0, duplicates: 0, added: 0 }), 4000);
-
-    // Auto-clear the parser session list a few seconds after upload completes,
-    // so the parser becomes a fresh scratchpad for the next batch.
-    if (clearTimerRef.current) window.clearTimeout(clearTimerRef.current);
-    clearTimerRef.current = window.setTimeout(() => {
-      setSessionIds(new Set());
-      setSelectedId(null);
-      clearTimerRef.current = null;
-    }, 3500);
   }
 
   function handleDrop(e: React.DragEvent) {
@@ -266,10 +250,10 @@ export default function ResumeParserView({
             <div className="mx-auto mb-2 flex h-10 w-10 items-center justify-center rounded-lg bg-blue-100 text-brand-500 dark:bg-blue-900/40 dark:text-blue-300">
               <Upload size={18} />
             </div>
-            <div className="text-xs font-semibold text-slate-900 dark:text-slate-100">
+            <div className="text-sm font-semibold text-slate-900 dark:text-slate-100">
               {busy ? t('parser.parsing', { file: currentFile }) : t('parser.dropTitle')}
             </div>
-            <div className="mt-0.5 text-[10px] text-slate-500 dark:text-slate-400">
+            <div className="mt-0.5 text-xs text-slate-700 dark:text-slate-300">
               {t('parser.dropSub')}
             </div>
           </div>
@@ -278,7 +262,7 @@ export default function ResumeParserView({
         {/* Bulk Progress (shown when uploading >1 file) */}
         {bulkProgress.total > 1 && (
           <div className="mx-3 mb-2 rounded-lg border border-blue-200 bg-gradient-to-br from-blue-50 to-indigo-50 p-2.5 dark:border-blue-900/60 dark:from-blue-900/20 dark:to-indigo-900/20">
-            <div className="mb-1.5 flex items-center justify-between text-[11px] font-bold">
+            <div className="mb-1.5 flex items-center justify-between text-sm font-bold">
               <span className="text-brand-500 dark:text-blue-300">📦 {t('parser.bulkUpload')}</span>
               <span className="text-slate-600 dark:text-slate-300">
                 {bulkProgress.current} / {bulkProgress.total}
@@ -292,7 +276,7 @@ export default function ResumeParserView({
                 }}
               />
             </div>
-            <div className="mt-1.5 flex gap-3 text-[9px]">
+            <div className="mt-1.5 flex gap-3 text-[11px]">
               <span className="font-semibold text-green-700 dark:text-green-400">✓ {t('parser.added', { n: bulkProgress.added })}</span>
               {bulkProgress.duplicates > 0 && (
                 <span className="font-semibold text-amber-700 dark:text-amber-300">⚠ {t('parser.dupes', { n: bulkProgress.duplicates })}</span>
@@ -304,7 +288,7 @@ export default function ResumeParserView({
         {/* Processing Steps */}
         {busy && (
           <div className="mx-3 mb-2 rounded-lg border border-slate-200 bg-slate-50 p-2 dark:border-slate-700 dark:bg-slate-800/50">
-            <div className="mb-1.5 text-[11px] font-bold text-brand-500 dark:text-blue-300">⚙ {t('parser.aiParsing')}</div>
+            <div className="mb-1.5 text-sm font-bold text-brand-500 dark:text-blue-300">⚙ {t('parser.aiParsing')}</div>
             {PROCESSING_STEPS.map((step, i) => {
               const done = i < currentStep;
               const active = i === currentStep;
@@ -316,19 +300,19 @@ export default function ResumeParserView({
                   }`}
                 >
                   <div
-                    className={`flex h-4 w-4 flex-shrink-0 items-center justify-center rounded-full text-[8px] font-bold text-white ${
+                    className={`flex h-4 w-4 flex-shrink-0 items-center justify-center rounded-full text-[10px] font-bold text-white ${
                       done ? 'bg-green-600' : active ? 'bg-brand-500' : 'bg-slate-300 dark:bg-slate-600'
                     }`}
                   >
                     {done ? '✓' : active ? '◉' : i + 1}
                   </div>
                   <span
-                    className={`text-[9px] ${
+                    className={`text-[11px] ${
                       done
                         ? 'text-green-700 font-medium dark:text-green-300'
                         : active
                         ? 'text-brand-500 font-semibold dark:text-blue-300'
-                        : 'text-slate-500 dark:text-slate-400'
+                        : 'text-slate-700 dark:text-slate-300'
                     }`}
                   >
                     {step}
@@ -347,7 +331,7 @@ export default function ResumeParserView({
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder={t('parser.searchPlaceholder')}
-            className="w-full bg-transparent text-[11px] outline-none dark:text-slate-100"
+            className="w-full bg-transparent text-sm outline-none dark:text-slate-100"
           />
         </div>
 
@@ -359,7 +343,7 @@ export default function ResumeParserView({
               <button
                 key={s}
                 onClick={() => setStageFilter(s)}
-                className={`rounded-full border px-2 py-0.5 text-[9px] font-medium transition-colors ${
+                className={`rounded-full border px-2 py-0.5 text-[11px] font-medium transition-colors ${
                   active
                     ? 'border-brand-200 bg-blue-50 text-brand-500 dark:border-blue-700 dark:bg-blue-900/30 dark:text-blue-300'
                     : 'border-slate-200 bg-slate-50 text-slate-500 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700'
@@ -374,12 +358,12 @@ export default function ResumeParserView({
         {/* Candidate List */}
         <div className="flex-1 overflow-y-auto px-2 pb-3">
           {filtered.length === 0 ? (
-            <div className="px-3 py-8 text-center text-slate-400 dark:text-slate-500">
+            <div className="px-3 py-8 text-center text-slate-600 dark:text-slate-400">
               <FileText size={28} className="mx-auto mb-2 opacity-40" />
-              <div className="text-[11px] font-semibold text-slate-500 dark:text-slate-400">
+              <div className="text-sm font-semibold text-slate-700 dark:text-slate-300">
                 {sessionIds.size ? t('parser.noMatches') : t('parser.ready')}
               </div>
-              <div className="mt-1 text-[10px]">
+              <div className="mt-1 text-xs">
                 {sessionIds.size ? t('parser.tryFilter') : t('parser.readyHint')}
               </div>
             </div>
@@ -401,28 +385,28 @@ export default function ResumeParserView({
                   }`}
                 >
                   <div
-                    className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full text-[10px] font-bold text-white"
+                    className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full text-xs font-bold text-white"
                     style={{ background: avatarColor(c.personal.full_name) }}
                   >
                     {getInitials(c.personal.full_name)}
                   </div>
                   <div className="min-w-0 flex-1">
-                    <div className="truncate text-[11px] font-semibold text-slate-900 dark:text-slate-100">
+                    <div className="truncate text-sm font-semibold text-slate-900 dark:text-slate-100">
                       {c.personal.full_name || 'Unknown'}
                     </div>
-                    <div className="truncate text-[10px] text-slate-500 dark:text-slate-400">
+                    <div className="truncate text-xs text-slate-700 dark:text-slate-300">
                       {c.current_title || c.filename}
                     </div>
                   </div>
                   <div className="flex-shrink-0 text-right">
                     <div
-                      className="text-[11px] font-bold"
+                      className="text-sm font-bold"
                       style={{ color: scoreColor(c.ai_score) }}
                     >
                       {c.ai_score}%
                     </div>
                     <div
-                      className="mt-0.5 rounded-full px-1.5 py-px text-[8px] font-semibold"
+                      className="mt-0.5 rounded-full px-1.5 py-px text-[10px] font-semibold"
                       style={{ background: stageStyle.bg, color: stageStyle.fg }}
                     >
                       {stageStyle.label}
@@ -434,37 +418,36 @@ export default function ResumeParserView({
           )}
         </div>
 
-        {/* Upload All — bulk file picker + Clear */}
+        {/* Bottom action bar: Add More + Clear All */}
         <div className="border-t border-slate-100 p-3 flex gap-2 dark:border-slate-800">
           <button
             onClick={triggerBulkUpload}
             disabled={busy}
-            className="flex flex-1 items-center justify-center gap-1.5 rounded-lg border border-blue-200 bg-blue-50 py-1.5 text-[11px] font-semibold text-brand-500 hover:bg-blue-100 disabled:opacity-50 disabled:cursor-not-allowed dark:border-blue-900/60 dark:bg-blue-900/30 dark:text-blue-300 dark:hover:bg-blue-900/50"
+            className="flex flex-1 items-center justify-center gap-1.5 rounded-lg border border-blue-200 bg-blue-50 py-2.5 text-base font-semibold text-brand-500 hover:bg-blue-100 disabled:opacity-50 disabled:cursor-not-allowed dark:border-blue-900/60 dark:bg-blue-900/30 dark:text-blue-300 dark:hover:bg-blue-900/50"
           >
-            <Upload size={12} />
+            <Upload size={14} />
             {busy ? t('parser.parsingDots') : sessionIds.size > 0 ? t('parser.addMore', { n: sessionIds.size }) : t('parser.uploadResumes')}
           </button>
-          {sessionIds.size > 0 && !busy && (
-            <button
-              onClick={clearSession}
-              title={t('parser.clear')}
-              className="flex items-center justify-center gap-1 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-[11px] font-semibold text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
-            >
-              <X size={12} /> {t('parser.clear')}
-            </button>
-          )}
+          <button
+            onClick={clearSession}
+            disabled={busy || sessionIds.size === 0}
+            title={t('parser.clearAll')}
+            className="flex items-center justify-center gap-1.5 rounded-lg border border-rose-200 bg-rose-50 px-4 py-2.5 text-base font-semibold text-rose-700 hover:bg-rose-100 disabled:opacity-40 disabled:cursor-not-allowed dark:border-rose-900/60 dark:bg-rose-900/30 dark:text-rose-300 dark:hover:bg-rose-900/50"
+          >
+            <X size={14} /> {t('parser.clearAll')}
+          </button>
         </div>
       </div>
 
       {/* ── RIGHT PANEL: Profile View ── */}
       <div className="flex flex-1 flex-col overflow-hidden">
         {!selected ? (
-          <div className="flex flex-1 flex-col items-center justify-center text-center text-slate-400 dark:text-slate-500">
+          <div className="flex flex-1 flex-col items-center justify-center text-center text-slate-600 dark:text-slate-400">
             <div className="mb-3 text-5xl">📄</div>
-            <div className="mb-1 text-base font-semibold text-slate-500 dark:text-slate-400">
+            <div className="mb-1 text-base font-semibold text-slate-700 dark:text-slate-300">
               {t('parser.getStarted')}
             </div>
-            <div className="max-w-sm text-xs text-slate-400 leading-relaxed dark:text-slate-500">
+            <div className="max-w-sm text-sm text-slate-400 leading-relaxed dark:text-slate-500">
               {t('parser.getStartedHint')}
             </div>
           </div>
@@ -493,7 +476,7 @@ export default function ResumeParserView({
                 <button
                   key={k}
                   onClick={() => setTab(k)}
-                  className={`flex items-center gap-1.5 whitespace-nowrap border-b-2 px-4 py-2 text-[11px] transition-colors ${
+                  className={`flex items-center gap-1.5 whitespace-nowrap border-b-2 px-4 py-2 text-sm transition-colors ${
                     tab === k
                       ? 'border-brand-500 font-semibold text-brand-500 dark:text-blue-300'
                       : 'border-transparent text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'
@@ -558,7 +541,7 @@ function ProfileHeader({
     <div className="flex-shrink-0 border-b border-blue-100 bg-white px-5 py-3.5 dark:border-slate-800 dark:bg-slate-900">
       <div className="flex items-start gap-3">
         <div
-          className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full text-sm font-bold text-white"
+          className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full text-base font-bold text-white"
           style={{ background: avatarColor(c.personal.full_name) }}
         >
           {getInitials(c.personal.full_name)}
@@ -567,7 +550,7 @@ function ProfileHeader({
           <div className="text-[15px] font-bold text-slate-900 dark:text-slate-100">
             {c.personal.full_name || 'Unknown'}
           </div>
-          <div className="mt-0.5 text-[11px] text-slate-500 dark:text-slate-400">{c.current_title || '—'}</div>
+          <div className="mt-0.5 text-sm text-slate-700 dark:text-slate-300">{c.current_title || '—'}</div>
 
           {/* Contact Pills */}
           <div className="mt-1.5 flex flex-wrap gap-1.5">
@@ -607,7 +590,7 @@ function ProfileHeader({
                 <button
                   key={s}
                   onClick={() => onStageChange(s)}
-                  className={`rounded-full px-2.5 py-0.5 text-[9px] font-${active ? 'bold' : 'medium'} transition-colors`}
+                  className={`rounded-full px-2.5 py-0.5 text-[11px] font-${active ? 'bold' : 'medium'} transition-colors`}
                   style={
                     active
                       ? { background: stageStyle.fg, color: '#fff' }
@@ -623,13 +606,13 @@ function ProfileHeader({
           {/* Job Link */}
           {openJobs.length > 0 && (
             <div className="mt-2 flex items-center gap-2">
-              <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-wide dark:text-slate-400">
+              <span className="text-xs font-semibold text-slate-500 uppercase tracking-wide dark:text-slate-400">
                 Job:
               </span>
               <select
                 value={c.jobId || ''}
                 onChange={(e) => onJobLink(e.target.value)}
-                className="rounded border border-slate-200 bg-white px-2 py-0.5 text-[10px] outline-none focus:border-brand-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+                className="rounded border border-slate-200 bg-white px-2 py-0.5 text-xs outline-none focus:border-brand-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
               >
                 <option value="">Not assigned</option>
                 {openJobs.map((j) => (
@@ -671,7 +654,7 @@ function ProfileHeader({
               {c.ai_score}
             </text>
           </svg>
-          <div className="text-[9px] font-semibold text-slate-500 dark:text-slate-400">AI SCORE</div>
+          <div className="text-[11px] font-semibold text-slate-700 dark:text-slate-300">AI SCORE</div>
         </div>
       </div>
     </div>
@@ -681,7 +664,7 @@ function ProfileHeader({
 function Pill({ icon: Icon, children, bg, fg }: any) {
   return (
     <span
-      className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium"
+      className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium"
       style={{ background: bg, color: fg }}
     >
       <Icon size={10} />
@@ -695,7 +678,7 @@ function Card({ children, title, color = '#2756e8' }: any) {
     <div className="rounded-xl border border-blue-100 bg-white p-3.5 dark:border-slate-800 dark:bg-slate-900">
       {title && (
         <div
-          className="mb-2 text-[10px] font-bold uppercase tracking-wider"
+          className="mb-2 text-xs font-bold uppercase tracking-wider"
           style={{ color }}
         >
           {title}
@@ -724,7 +707,7 @@ function FieldRow({
   const editing = editField === field;
   return (
     <div className="flex items-start gap-2 border-b border-slate-50 py-1 dark:border-slate-800">
-      <div className="w-28 flex-shrink-0 pt-0.5 text-[10px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+      <div className="w-28 flex-shrink-0 pt-0.5 text-xs font-semibold uppercase tracking-wide text-slate-700 dark:text-slate-300">
         {label}
       </div>
       {editing ? (
@@ -739,13 +722,13 @@ function FieldRow({
             if (e.key === 'Enter') e.currentTarget.blur();
             if (e.key === 'Escape') setEditField(null);
           }}
-          className="flex-1 rounded border border-brand-500 px-2 py-0.5 text-[11px] outline-none dark:bg-slate-800 dark:text-slate-100"
+          className="flex-1 rounded border border-brand-500 px-2 py-0.5 text-sm outline-none dark:bg-slate-800 dark:text-slate-100"
         />
       ) : (
         <div
           onClick={() => setEditField(field)}
-          className={`flex-1 cursor-pointer rounded px-1.5 py-0.5 text-[11px] hover:bg-slate-100 dark:hover:bg-slate-800 ${
-            value ? 'text-slate-900 dark:text-slate-100' : 'text-slate-400 dark:text-slate-500'
+          className={`flex-1 cursor-pointer rounded px-1.5 py-0.5 text-sm hover:bg-slate-100 dark:hover:bg-slate-800 ${
+            value ? 'text-slate-900 dark:text-slate-100' : 'text-slate-600 dark:text-slate-400'
           }`}
         >
           {value || '— click to edit —'}
@@ -807,9 +790,9 @@ function ProfileTab({
           {fr('Website', p.website, 'personal.website')}
         </Card>
         <Card title="Summary" color="#15803d">
-          <div className="text-[11px] leading-relaxed text-slate-600 dark:text-slate-300">
+          <div className="text-sm leading-relaxed text-slate-600 dark:text-slate-300">
             {c.professional_summary || (
-              <span className="text-slate-400 dark:text-slate-500">No summary extracted</span>
+              <span className="text-slate-600 dark:text-slate-400">No summary extracted</span>
             )}
           </div>
         </Card>
@@ -825,8 +808,8 @@ function ExperienceTab({ candidate: c }: { candidate: Candidate }) {
       <Card>
         <div className="py-7 text-center">
           <Briefcase size={32} className="mx-auto mb-2 text-slate-300 dark:text-slate-600" />
-          <div className="text-xs font-semibold text-slate-500 dark:text-slate-400">No work experience extracted</div>
-          <div className="mt-1 text-[11px] text-slate-400 dark:text-slate-500">
+          <div className="text-sm font-semibold text-slate-700 dark:text-slate-300">No work experience extracted</div>
+          <div className="mt-1 text-sm text-slate-600 dark:text-slate-400">
             Add an AI key for detailed extraction
           </div>
         </div>
@@ -839,29 +822,29 @@ function ExperienceTab({ candidate: c }: { candidate: Candidate }) {
         <div key={i} className="rounded-xl border border-blue-100 bg-white p-3.5 dark:border-slate-800 dark:bg-slate-900">
           <div className="mb-1.5 flex items-start justify-between gap-2">
             <div>
-              <div className="text-xs font-bold text-slate-900 dark:text-slate-100">{e.title}</div>
-              <div className="text-[11px] font-medium text-brand-500 dark:text-blue-300">{e.company}</div>
+              <div className="text-sm font-bold text-slate-900 dark:text-slate-100">{e.title}</div>
+              <div className="text-sm font-medium text-brand-500 dark:text-blue-300">{e.company}</div>
               {e.location && (
-                <div className="text-[10px] text-slate-500 dark:text-slate-400">{e.location}</div>
+                <div className="text-xs text-slate-700 dark:text-slate-300">{e.location}</div>
               )}
             </div>
             <div className="flex-shrink-0 text-right">
-              <div className="rounded bg-slate-100 px-2 py-0.5 text-[10px] text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+              <div className="rounded bg-slate-100 px-2 py-0.5 text-xs text-slate-600 dark:bg-slate-800 dark:text-slate-300">
                 {e.start_date} — {e.current ? 'Present' : e.end_date}
               </div>
               {e.duration && (
-                <div className="mt-0.5 text-[9px] text-slate-400 dark:text-slate-500">{e.duration}</div>
+                <div className="mt-0.5 text-[11px] text-slate-600 dark:text-slate-400">{e.duration}</div>
               )}
             </div>
           </div>
           {(e.responsibilities || []).length > 0 && (
             <div className="mt-1.5">
-              <div className="mb-1 text-[9px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+              <div className="mb-1 text-[11px] font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
                 Responsibilities
               </div>
               <ul className="ml-3.5 list-disc space-y-0.5">
                 {e.responsibilities.map((r, j) => (
-                  <li key={j} className="text-[11px] leading-relaxed text-slate-600 dark:text-slate-300">
+                  <li key={j} className="text-sm leading-relaxed text-slate-600 dark:text-slate-300">
                     {r}
                   </li>
                 ))}
@@ -870,12 +853,12 @@ function ExperienceTab({ candidate: c }: { candidate: Candidate }) {
           )}
           {(e.achievements || []).length > 0 && (
             <div className="mt-1.5">
-              <div className="mb-1 text-[9px] font-bold uppercase tracking-wider text-green-700 dark:text-green-400">
+              <div className="mb-1 text-[11px] font-bold uppercase tracking-wider text-green-700 dark:text-green-400">
                 Achievements
               </div>
               <ul className="ml-3.5 list-disc space-y-0.5">
                 {e.achievements.map((a, j) => (
-                  <li key={j} className="text-[11px] leading-relaxed text-green-700 dark:text-green-300">
+                  <li key={j} className="text-sm leading-relaxed text-green-700 dark:text-green-300">
                     {a}
                   </li>
                 ))}
@@ -896,7 +879,7 @@ function EducationTab({ candidate: c }: { candidate: Candidate }) {
     <div className="space-y-2.5">
       {ed.length === 0 ? (
         <Card>
-          <div className="py-6 text-center text-slate-400 dark:text-slate-500">
+          <div className="py-6 text-center text-slate-600 dark:text-slate-400">
             <GraduationCap size={32} className="mx-auto mb-1.5 text-slate-300 dark:text-slate-600" />
             No education extracted
           </div>
@@ -906,18 +889,18 @@ function EducationTab({ candidate: c }: { candidate: Candidate }) {
           <Card key={i}>
             <div className="flex items-start justify-between">
               <div>
-                <div className="text-xs font-bold text-slate-900 dark:text-slate-100">
+                <div className="text-sm font-bold text-slate-900 dark:text-slate-100">
                   {e.degree}
                   {e.field && ` — ${e.field}`}
                 </div>
-                <div className="mt-0.5 text-[11px] font-medium text-brand-500 dark:text-blue-300">
+                <div className="mt-0.5 text-sm font-medium text-brand-500 dark:text-blue-300">
                   {e.institution}
                 </div>
                 {e.grade && (
-                  <div className="mt-0.5 text-[10px] text-green-700 dark:text-green-400">Grade: {e.grade}</div>
+                  <div className="mt-0.5 text-xs text-green-700 dark:text-green-400">Grade: {e.grade}</div>
                 )}
               </div>
-              <div className="rounded bg-slate-100 px-2 py-0.5 text-[10px] text-slate-500 dark:bg-slate-800 dark:text-slate-400">
+              <div className="rounded bg-slate-100 px-2 py-0.5 text-xs text-slate-500 dark:bg-slate-800 dark:text-slate-400">
                 {e.start_year}
                 {e.end_year && ` — ${e.end_year}`}
               </div>
@@ -927,13 +910,13 @@ function EducationTab({ candidate: c }: { candidate: Candidate }) {
       )}
       {ce.length > 0 && (
         <>
-          <div className="mt-3 mb-1 text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+          <div className="mt-3 mb-1 text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
             Certifications
           </div>
           {ce.map((x, i) => (
             <div key={i} className="rounded-lg border border-blue-100 bg-white p-2.5 dark:border-slate-800 dark:bg-slate-900">
-              <div className="text-xs font-semibold text-slate-900 dark:text-slate-100">{x.name}</div>
-              <div className="text-[10px] text-slate-500 dark:text-slate-400">
+              <div className="text-sm font-semibold text-slate-900 dark:text-slate-100">{x.name}</div>
+              <div className="text-xs text-slate-700 dark:text-slate-300">
                 {x.issuer}
                 {x.year && ` · ${x.year}`}
                 {x.expiry && ` · Expires: ${x.expiry}`}
@@ -944,13 +927,13 @@ function EducationTab({ candidate: c }: { candidate: Candidate }) {
       )}
       {aw.length > 0 && (
         <>
-          <div className="mt-3 mb-1 text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+          <div className="mt-3 mb-1 text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
             Awards
           </div>
           {aw.map((a, i) => (
             <div
               key={i}
-              className="rounded-lg border border-blue-100 bg-white p-2.5 text-[11px] text-slate-700 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300"
+              className="rounded-lg border border-blue-100 bg-white p-2.5 text-sm text-slate-700 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300"
             >
               {typeof a === 'string' ? a : JSON.stringify(a)}
             </div>
@@ -969,7 +952,7 @@ function SkillsTab({ candidate: c }: { candidate: Candidate }) {
         {items.map((s, i) => (
           <span
             key={i}
-            className="rounded-full px-2 py-0.5 text-[10px] font-medium"
+            className="rounded-full px-2 py-0.5 text-xs font-medium"
             style={{ background: bg, color: fg }}
           >
             {s}
@@ -977,7 +960,7 @@ function SkillsTab({ candidate: c }: { candidate: Candidate }) {
         ))}
       </div>
     ) : (
-      <span className="text-[10px] text-slate-400 dark:text-slate-500">None detected</span>
+      <span className="text-xs text-slate-600 dark:text-slate-400">None detected</span>
     );
 
   return (
@@ -1005,14 +988,14 @@ function SkillsTab({ candidate: c }: { candidate: Candidate }) {
             <div className="space-y-2">
               {c.projects.map((p, i) => (
                 <div key={i} className="border-b border-slate-100 pb-2 last:border-0 dark:border-slate-800">
-                  <div className="text-[11px] font-semibold text-slate-900 dark:text-slate-100">{p.name}</div>
-                  <div className="mt-0.5 text-[10px] text-slate-500 dark:text-slate-400">{p.description}</div>
+                  <div className="text-sm font-semibold text-slate-900 dark:text-slate-100">{p.name}</div>
+                  <div className="mt-0.5 text-xs text-slate-700 dark:text-slate-300">{p.description}</div>
                   {p.tech_used.length > 0 && (
                     <div className="mt-1 flex flex-wrap gap-1">
                       {p.tech_used.map((t, j) => (
                         <span
                           key={j}
-                          className="rounded-full bg-teal-50 px-1.5 py-0.5 text-[9px] font-medium text-teal-700 dark:bg-teal-900/30 dark:text-teal-300"
+                          className="rounded-full bg-teal-50 px-1.5 py-0.5 text-[11px] font-medium text-teal-700 dark:bg-teal-900/30 dark:text-teal-300"
                         >
                           {t}
                         </span>
@@ -1065,36 +1048,36 @@ function AIInsightsTab({ candidate: c }: { candidate: Candidate }) {
                 {c.ai_score}
               </text>
             </svg>
-            <div className="mt-1 text-[10px] font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+            <div className="mt-1 text-xs font-bold uppercase tracking-wide text-slate-700 dark:text-slate-300">
               {scoreLabel(c.ai_score)}
             </div>
           </div>
           <div className="rounded-lg bg-green-50 p-3 dark:bg-green-900/20">
-            <div className="mb-1.5 flex items-center gap-1 text-[9px] font-bold uppercase tracking-wider text-green-700 dark:text-green-300">
+            <div className="mb-1.5 flex items-center gap-1 text-[11px] font-bold uppercase tracking-wider text-green-700 dark:text-green-300">
               <Check size={11} /> Strengths
             </div>
             {c.ai_strengths.length > 0 ? (
               c.ai_strengths.map((s, i) => (
-                <div key={i} className="py-0.5 text-[11px] text-green-700 dark:text-green-300">
+                <div key={i} className="py-0.5 text-sm text-green-700 dark:text-green-300">
                   • {s}
                 </div>
               ))
             ) : (
-              <div className="text-[10px] text-slate-400 dark:text-slate-500">Add AI key for insights</div>
+              <div className="text-xs text-slate-600 dark:text-slate-400">Add AI key for insights</div>
             )}
           </div>
           <div className="rounded-lg bg-rose-50 p-3 dark:bg-rose-900/20">
-            <div className="mb-1.5 flex items-center gap-1 text-[9px] font-bold uppercase tracking-wider text-rose-600 dark:text-rose-300">
+            <div className="mb-1.5 flex items-center gap-1 text-[11px] font-bold uppercase tracking-wider text-rose-600 dark:text-rose-300">
               <AlertCircle size={11} /> Concerns
             </div>
             {c.ai_concerns.length > 0 ? (
               c.ai_concerns.map((s, i) => (
-                <div key={i} className="py-0.5 text-[11px] text-rose-600 dark:text-rose-300">
+                <div key={i} className="py-0.5 text-sm text-rose-600 dark:text-rose-300">
                   • {s}
                 </div>
               ))
             ) : (
-              <div className="text-[10px] text-slate-400 dark:text-slate-500">None flagged</div>
+              <div className="text-xs text-slate-600 dark:text-slate-400">None flagged</div>
             )}
           </div>
         </div>
@@ -1106,21 +1089,21 @@ function AIInsightsTab({ candidate: c }: { candidate: Candidate }) {
             {c.recommended_roles.map((r, i) => (
               <span
                 key={i}
-                className="rounded-full bg-purple-50 px-2 py-0.5 text-[10px] font-medium text-purple-700 dark:bg-purple-900/30 dark:text-purple-300"
+                className="rounded-full bg-purple-50 px-2 py-0.5 text-xs font-medium text-purple-700 dark:bg-purple-900/30 dark:text-purple-300"
               >
                 {r}
               </span>
             ))}
           </div>
         ) : (
-          <span className="text-[10px] text-slate-400 dark:text-slate-500">
+          <span className="text-xs text-slate-600 dark:text-slate-400">
             Add AI key for role recommendations
           </span>
         )}
       </Card>
 
       <Card title="File Details" color="#0891b2">
-        <div className="flex flex-wrap gap-3 text-[11px] text-slate-500 dark:text-slate-400">
+        <div className="flex flex-wrap gap-3 text-sm text-slate-700 dark:text-slate-300">
           <span className="flex items-center gap-1">
             <FileText size={12} /> {c.filename}
           </span>
@@ -1140,17 +1123,17 @@ function RawTab({ candidate: c, onCopy }: { candidate: Candidate; onCopy: () => 
   return (
     <Card>
       <div className="mb-2 flex items-center justify-between">
-        <div className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+        <div className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
           Raw Text — {(c.rawText || '').length} chars from {c.filename}
         </div>
         <button
           onClick={onCopy}
-          className="rounded bg-blue-50 px-3 py-1 text-[10px] font-medium text-brand-500 hover:bg-blue-100 dark:bg-blue-900/30 dark:text-blue-300 dark:hover:bg-blue-900/50"
+          className="rounded bg-blue-50 px-3 py-1 text-xs font-medium text-brand-500 hover:bg-blue-100 dark:bg-blue-900/30 dark:text-blue-300 dark:hover:bg-blue-900/50"
         >
           Copy
         </button>
       </div>
-      <pre className="max-h-[480px] overflow-auto rounded-lg bg-slate-50 p-3 font-mono text-[10px] leading-relaxed text-slate-600 whitespace-pre-wrap break-words dark:bg-slate-800 dark:text-slate-300">
+      <pre className="max-h-[480px] overflow-auto rounded-lg bg-slate-50 p-3 font-mono text-xs leading-relaxed text-slate-600 whitespace-pre-wrap break-words dark:bg-slate-800 dark:text-slate-300">
         {c.rawText || 'No text was extracted from this file.\n\nTip: For image-based PDFs, an AI key with vision capability is required.'}
       </pre>
     </Card>

@@ -12,6 +12,7 @@ import {
   type CalEvent
 } from '../lib/calendar';
 import { uid } from '../lib/storage';
+import { useUi } from '../lib/uiContext';
 
 interface Props {
   candidates: Candidate[];
@@ -22,6 +23,7 @@ interface Props {
 const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
 export default function CalendarView({ candidates, jobs, interviews }: Props) {
+  const { t } = useUi();
   const [reminders, setReminders] = useState<CalendarReminder[]>(() => loadReminders());
   const [cursor, setCursor] = useState(() => startOfMonth(new Date()));
   const [selectedDate, setSelectedDate] = useState<string>(() => toLocalDateKey(new Date()));
@@ -94,7 +96,7 @@ export default function CalendarView({ candidates, jobs, interviews }: Props) {
     setEditing(null);
   }
   function removeReminder(id: string) {
-    if (!confirm('Delete this reminder?')) return;
+    if (!confirm(t('cal.confirmDelete'))) return;
     setReminders((prev) => prev.filter((x) => x.id !== id));
     deleteReminder(id);
   }
@@ -117,7 +119,7 @@ export default function CalendarView({ candidates, jobs, interviews }: Props) {
             <h1 className="text-base font-bold text-slate-900 dark:text-slate-100">{monthLabel}</h1>
             <div className="flex items-center gap-1">
               <button onClick={() => go(-1)} className="rounded p-1 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800"><ChevronLeft size={15} /></button>
-              <button onClick={() => setCursor(startOfMonth(new Date()))} className="rounded border border-slate-200 px-2 py-0.5 text-[10px] font-semibold text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800">Today</button>
+              <button onClick={() => setCursor(startOfMonth(new Date()))} className="rounded border border-slate-200 px-2 py-0.5 text-[10px] font-semibold text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800">{t('cal.todayBtn')}</button>
               <button onClick={() => go(1)} className="rounded p-1 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800"><ChevronRight size={15} /></button>
             </div>
           </div>
@@ -125,7 +127,7 @@ export default function CalendarView({ candidates, jobs, interviews }: Props) {
             onClick={() => openCreate()}
             className="flex items-center gap-1.5 rounded-lg bg-brand-500 px-3 py-1.5 text-xs font-semibold text-white hover:bg-brand-600"
           >
-            <Plus size={13} /> Add Reminder
+            <Plus size={13} /> {t('cal.addReminder')}
           </button>
         </div>
 
@@ -178,7 +180,7 @@ export default function CalendarView({ candidates, jobs, interviews }: Props) {
                     </span>
                   ))}
                   {dayEvents.length > 3 && (
-                    <span className="text-[9.5px] font-semibold text-slate-400">+{dayEvents.length - 3} more</span>
+                    <span className="text-[9.5px] font-semibold text-slate-400">{t('cal.moreSuffix', { n: dayEvents.length - 3 })}</span>
                   )}
                 </div>
               </button>
@@ -190,12 +192,12 @@ export default function CalendarView({ candidates, jobs, interviews }: Props) {
       {/* Right side panel: Today + Upcoming */}
       <aside className="hidden w-72 flex-shrink-0 flex-col border-s border-blue-100 bg-white p-3 lg:flex dark:border-slate-800 dark:bg-slate-900">
         <div className="mb-2 flex items-center gap-2 text-[11px] font-bold uppercase tracking-wider text-brand-500 dark:text-blue-300">
-          <Bell size={12} /> Today
+          <Bell size={12} /> {t('cal.today')}
         </div>
         <div className="mb-4 space-y-1.5">
           {todayEvents.length === 0 ? (
             <div className="rounded-lg border border-dashed border-slate-200 px-3 py-4 text-center text-[11px] text-slate-400 dark:border-slate-700">
-              Nothing scheduled today
+              {t('cal.noTodayItems')}
             </div>
           ) : todayEvents.map((e) => (
             <EventRow key={e.id} e={e} candidates={candidates} jobs={jobs} onToggle={toggleDone} onEdit={openEdit} onRemove={removeReminder} />
@@ -203,12 +205,12 @@ export default function CalendarView({ candidates, jobs, interviews }: Props) {
         </div>
 
         <div className="mb-2 flex items-center gap-2 text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-          <Sparkles size={12} /> Upcoming
+          <Sparkles size={12} /> {t('cal.upcoming')}
         </div>
         <div className="flex-1 space-y-1.5 overflow-y-auto pr-1">
           {upcomingEvents.length === 0 ? (
             <div className="rounded-lg border border-dashed border-slate-200 px-3 py-4 text-center text-[11px] text-slate-400 dark:border-slate-700">
-              No upcoming events
+              {t('cal.noUpcoming')}
             </div>
           ) : upcomingEvents.map((e) => (
             <EventRow key={e.id} e={e} candidates={candidates} jobs={jobs} onToggle={toggleDone} onEdit={openEdit} onRemove={removeReminder} />

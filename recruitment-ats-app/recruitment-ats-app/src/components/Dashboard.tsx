@@ -5,6 +5,7 @@ import {
 import type { Candidate, JobPosting, Interview, OfferLetter, AppView, Stage } from '../lib/types';
 import { stageColors, avatarColor, getInitials, scoreColor } from '../lib/utils';
 import { findAllDuplicates } from '../lib/dedup';
+import { useUi } from '../lib/uiContext';
 
 interface DashboardProps {
   candidates: Candidate[];
@@ -23,6 +24,7 @@ export default function Dashboard({
   apiKeyConnected,
   onNavigate
 }: DashboardProps) {
+  const { t } = useUi();
   const openJobs = jobs.filter((j) => j.status === 'open');
   const upcoming = interviews
     .filter((i) => i.status === 'scheduled' && new Date(i.scheduled_at) >= new Date())
@@ -62,15 +64,15 @@ export default function Dashboard({
       {/* Page header */}
       <div className="mb-5 flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-bold text-slate-900 dark:text-slate-100">Dashboard</h1>
-          <p className="text-xs text-slate-500 dark:text-slate-400">Recruitment overview & hiring pipeline</p>
+          <h1 className="text-xl font-bold text-slate-900 dark:text-slate-100">{t('dash.title')}</h1>
+          <p className="text-xs text-slate-500 dark:text-slate-400">{t('dash.subtitle')}</p>
         </div>
         <button
           onClick={() => onNavigate('parser')}
           className="flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-brand-500 to-indigo-700 px-4 py-2 text-xs font-semibold text-white shadow-md hover:opacity-90"
         >
           <Upload size={14} />
-          Parse Resume
+          {t('dash.parseResume')}
         </button>
       </div>
 
@@ -82,11 +84,10 @@ export default function Dashboard({
           </div>
           <div className="flex-1">
             <div className="text-xs font-semibold text-amber-900 dark:text-amber-200">
-              Unlock AI-powered resume parsing
+              {t('dash.banner.aiTitle')}
             </div>
             <div className="text-[11px] text-amber-700 dark:text-amber-300/80">
-              Add an OpenAI or Anthropic API key in Settings to extract full candidate profiles
-              automatically.
+              {t('dash.banner.aiBody')}
             </div>
           </div>
         </div>
@@ -100,7 +101,7 @@ export default function Dashboard({
           </div>
           <div className="flex-1">
             <div className="text-xs font-semibold text-rose-900 dark:text-rose-200">
-              {highConfidenceDupes.length} potential duplicate{highConfidenceDupes.length > 1 ? 's' : ''} detected
+              {t(highConfidenceDupes.length === 1 ? 'dash.banner.dupTitle' : 'dash.banner.dupTitlePlural', { n: highConfidenceDupes.length })}
             </div>
             <div className="text-[11px] text-rose-700 dark:text-rose-300/80">
               {highConfidenceDupes.slice(0, 2).map((d, i) => (
@@ -117,7 +118,7 @@ export default function Dashboard({
             onClick={() => onNavigate('candidates')}
             className="rounded-lg bg-rose-600 px-3 py-1.5 text-[11px] font-semibold text-white hover:bg-rose-700"
           >
-            Review
+            {t('dash.banner.dupReview')}
           </button>
         </div>
       )}
@@ -126,33 +127,33 @@ export default function Dashboard({
       <div className="mb-5 grid grid-cols-2 gap-3 md:grid-cols-4">
         <KPI
           icon={Users}
-          label="Candidates"
+          label={t('dash.kpi.candidates')}
           value={candidates.length}
-          sub={`${stageDist.applied} new`}
+          sub={t('dash.kpi.candidatesSub', { n: stageDist.applied })}
           color="#2756e8"
           onClick={() => onNavigate('candidates')}
         />
         <KPI
           icon={Briefcase}
-          label="Open Jobs"
+          label={t('dash.kpi.openJobs')}
           value={openJobs.length}
-          sub={`${totalOpenings} openings`}
+          sub={t('dash.kpi.openJobsSub', { n: totalOpenings })}
           color="#15803d"
           onClick={() => onNavigate('jobs')}
         />
         <KPI
           icon={Calendar}
-          label="Interviews"
+          label={t('dash.kpi.interviews')}
           value={upcoming.length}
-          sub="Upcoming"
+          sub={t('dash.kpi.interviewsSub')}
           color="#d97706"
           onClick={() => onNavigate('interviews')}
         />
         <KPI
           icon={FileSignature}
-          label="Pending Offers"
+          label={t('dash.kpi.pendingOffers')}
           value={pendingOffers.length}
-          sub={`${offers.filter((o) => o.status === 'accepted').length} accepted`}
+          sub={t('dash.kpi.pendingOffersSub', { n: offers.filter((o) => o.status === 'accepted').length })}
           color="#7c3aed"
           onClick={() => onNavigate('offers')}
         />
@@ -163,13 +164,13 @@ export default function Dashboard({
         <div className="rounded-xl border border-blue-100 bg-white dark:border-slate-800 dark:bg-slate-900 p-4 lg:col-span-2">
           <div className="mb-3 flex items-center justify-between">
             <div className="text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300">
-              Hiring Pipeline
+              {t('dash.card.pipeline')}
             </div>
             <button
               onClick={() => onNavigate('pipeline')}
               className="flex items-center gap-1 text-[10px] font-semibold text-brand-500 hover:underline dark:text-blue-300"
             >
-              View pipeline <ArrowRight size={11} />
+              {t('dash.card.viewPipeline')} <ArrowRight size={11} />
             </button>
           </div>
           <div className="grid grid-cols-3 gap-2 md:grid-cols-6">
@@ -197,14 +198,14 @@ export default function Dashboard({
         <div className="rounded-xl border border-blue-100 bg-white dark:border-slate-800 dark:bg-slate-900 p-4">
           <div className="mb-3 flex items-center justify-between">
             <div className="text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300">
-              Hiring Progress
+              {t('dash.card.progress')}
             </div>
             <TrendingUp size={14} className="text-green-600" />
           </div>
           <div className="space-y-3">
-            <ProgressBar label="Positions Filled" current={totalFilled} total={Math.max(totalOpenings + totalFilled, 1)} color="#15803d" />
-            <ProgressBar label="Offers Accepted" current={offers.filter((o) => o.status === 'accepted').length} total={Math.max(offers.length, 1)} color="#7c3aed" />
-            <ProgressBar label="Interview Complete" current={interviews.filter((i) => i.status === 'completed').length} total={Math.max(interviews.length, 1)} color="#d97706" />
+            <ProgressBar label={t('dash.bar.positionsFilled')} current={totalFilled} total={Math.max(totalOpenings + totalFilled, 1)} color="#15803d" />
+            <ProgressBar label={t('dash.bar.offersAccepted')} current={offers.filter((o) => o.status === 'accepted').length} total={Math.max(offers.length, 1)} color="#7c3aed" />
+            <ProgressBar label={t('dash.bar.interviewComplete')} current={interviews.filter((i) => i.status === 'completed').length} total={Math.max(interviews.length, 1)} color="#d97706" />
           </div>
         </div>
 
@@ -212,19 +213,19 @@ export default function Dashboard({
         <div className="rounded-xl border border-blue-100 bg-white dark:border-slate-800 dark:bg-slate-900 p-4 lg:col-span-2">
           <div className="mb-3 flex items-center justify-between">
             <div className="text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300">
-              Top Candidates by AI Score
+              {t('dash.card.topCandidates')}
             </div>
             <Award size={14} className="text-amber-500" />
           </div>
           {topCandidates.length === 0 ? (
             <div className="py-8 text-center text-slate-400 dark:text-slate-500">
               <ScanLine size={32} className="mx-auto mb-2 opacity-40" />
-              <div className="text-xs font-semibold text-slate-500 dark:text-slate-400">No candidates yet</div>
+              <div className="text-xs font-semibold text-slate-500 dark:text-slate-400">{t('dash.card.noCandidates')}</div>
               <button
                 onClick={() => onNavigate('parser')}
                 className="mt-3 rounded-lg bg-brand-500 px-3 py-1.5 text-[11px] font-semibold text-white"
               >
-                Parse first resume →
+                {t('dash.card.parseFirst')}
               </button>
             </div>
           ) : (
@@ -271,19 +272,19 @@ export default function Dashboard({
         <div className="rounded-xl border border-blue-100 bg-white dark:border-slate-800 dark:bg-slate-900 p-4">
           <div className="mb-3 flex items-center justify-between">
             <div className="text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300">
-              Upcoming Interviews
+              {t('dash.card.upcoming')}
             </div>
             <button
               onClick={() => onNavigate('interviews')}
               className="text-[10px] font-semibold text-brand-500 hover:underline dark:text-blue-300"
             >
-              View all
+              {t('dash.card.viewAll')}
             </button>
           </div>
           {upcoming.length === 0 ? (
             <div className="py-6 text-center text-slate-400 dark:text-slate-500">
               <Calendar size={28} className="mx-auto mb-1.5 opacity-40" />
-              <div className="text-[11px] font-semibold text-slate-500 dark:text-slate-400">No upcoming interviews</div>
+              <div className="text-[11px] font-semibold text-slate-500 dark:text-slate-400">{t('dash.card.noUpcoming')}</div>
             </div>
           ) : (
             <div className="space-y-1.5">
@@ -313,18 +314,18 @@ export default function Dashboard({
         <div className="rounded-xl border border-blue-100 bg-white dark:border-slate-800 dark:bg-slate-900 p-4 lg:col-span-3">
           <div className="mb-3 flex items-center justify-between">
             <div className="text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300">
-              Top Skills in Talent Pool
+              {t('dash.card.topSkills')}
             </div>
             <button
               onClick={() => onNavigate('search')}
               className="flex items-center gap-1 text-[10px] font-semibold text-brand-500 hover:underline dark:text-blue-300"
             >
-              <Search size={11} /> Advanced search
+              <Search size={11} /> {t('dash.card.advancedSearch')}
             </button>
           </div>
           {topSkills.length === 0 ? (
             <div className="py-6 text-center text-xs text-slate-400 dark:text-slate-500">
-              No skills data yet — upload some resumes
+              {t('dash.card.noSkills')}
             </div>
           ) : (
             <div className="grid grid-cols-2 md:grid-cols-5 gap-2">

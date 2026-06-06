@@ -3,6 +3,7 @@ import { Plus, Briefcase, Users, MapPin, DollarSign, X, Trash2, Edit2 } from 'lu
 import type { JobPosting, Candidate } from '../lib/types';
 import { uid } from '../lib/storage';
 import { formatDate, formatCurrency } from '../lib/utils';
+import { useUi } from '../lib/uiContext';
 
 interface JobsViewProps {
   jobs: JobPosting[];
@@ -48,10 +49,18 @@ export default function JobsView({
   onDeleteJob,
   onToast
 }: JobsViewProps) {
+  const { t } = useUi();
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [draft, setDraft] = useState<Omit<JobPosting, 'id'>>(EMPTY_JOB);
   const [statusFilter, setStatusFilter] = useState<JobPosting['status'] | 'all'>('all');
+  const STATUS_LABEL: Record<typeof statusFilter, string> = {
+    all: t('jobs.all'),
+    draft: t('jobs.draft'),
+    open: t('jobs.open'),
+    on_hold: t('jobs.onHold'),
+    closed: t('jobs.closed')
+  };
 
   function openCreate() {
     setDraft(EMPTY_JOB);
@@ -92,9 +101,9 @@ export default function JobsView({
     <div className="h-full overflow-y-auto bg-slate-50 p-5 dark:bg-slate-950">
       <div className="mb-4 flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-bold text-slate-900 dark:text-slate-100">Job Postings</h1>
+          <h1 className="text-xl font-bold text-slate-900 dark:text-slate-100">{t('jobs.title')}</h1>
           <p className="text-xs text-slate-500 dark:text-slate-400">
-            {filtered.length} of {jobs.length} positions
+            {t('jobs.count', { filtered: filtered.length, total: jobs.length })}
           </p>
         </div>
         <button
@@ -102,7 +111,7 @@ export default function JobsView({
           className="flex items-center gap-1.5 rounded-lg bg-brand-500 px-4 py-2 text-xs font-semibold text-white hover:bg-brand-600"
         >
           <Plus size={14} />
-          New Job
+          {t('jobs.new')}
         </button>
       </div>
 
@@ -118,7 +127,7 @@ export default function JobsView({
                 : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50 dark:bg-slate-900 dark:text-slate-300 dark:border-slate-700 dark:hover:bg-slate-800'
             }`}
           >
-            {s === 'all' ? 'All' : s.replace('_', ' ').replace(/\b\w/g, (l) => l.toUpperCase())}
+            {STATUS_LABEL[s]}
           </button>
         ))}
       </div>
@@ -128,12 +137,12 @@ export default function JobsView({
         {filtered.length === 0 ? (
           <div className="col-span-full py-16 text-center">
             <Briefcase size={48} className="mx-auto mb-3 text-slate-300 dark:text-slate-600" />
-            <div className="text-sm font-semibold text-slate-500 dark:text-slate-300">No jobs yet</div>
+            <div className="text-sm font-semibold text-slate-500 dark:text-slate-300">{t('jobs.empty')}</div>
             <button
               onClick={openCreate}
               className="mt-3 rounded-lg bg-brand-500 px-4 py-2 text-xs font-semibold text-white"
             >
-              Create first job
+              {t('jobs.createFirst')}
             </button>
           </div>
         ) : (
@@ -151,7 +160,7 @@ export default function JobsView({
                     <div className="text-[11px] text-slate-500 dark:text-slate-400">{j.department}</div>
                     {j.client && (
                       <div className="mt-1 inline-flex items-center gap-1 rounded-full bg-purple-50 px-2 py-0.5 text-[10px] font-semibold text-purple-700 dark:bg-purple-900/30 dark:text-purple-300">
-                        Client: {j.client}
+                        {t('jobs.clientLabel', { name: j.client })}
                       </div>
                     )}
                   </div>
@@ -175,7 +184,7 @@ export default function JobsView({
                   </div>
                   <div className="flex items-center gap-1.5">
                     <Users size={11} className="text-slate-400" />
-                    {j.filled}/{j.openings} filled · {linked.length} applicants
+                    {j.filled}/{j.openings} · {linked.length} {t('jobs.applicantsSuffix')}
                   </div>
                 </div>
 
@@ -199,7 +208,7 @@ export default function JobsView({
 
                 <div className="flex items-center justify-between border-t border-slate-100 pt-2.5 dark:border-slate-800">
                   <div className="text-[10px] text-slate-400 dark:text-slate-500">
-                    Posted {formatDate(j.posted_date)}
+                    {t('jobs.posted')} {formatDate(j.posted_date)}
                   </div>
                   <div className="flex gap-1">
                     <button
@@ -234,7 +243,7 @@ export default function JobsView({
             <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4 dark:border-slate-800">
               <div>
                 <div className="text-base font-bold text-slate-900 dark:text-slate-100">
-                  {editingId ? 'Edit Job' : 'New Job Posting'}
+                  {editingId ? t('jobs.modalEdit') : t('jobs.modalNew')}
                 </div>
               </div>
               <button
@@ -246,7 +255,7 @@ export default function JobsView({
             </div>
             <div className="max-h-[70vh] overflow-y-auto p-5">
               <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-                <Field label="Title*">
+                <Field label={t('jobs.field.title')}>
                   <input
                     value={draft.title}
                     onChange={(e) => setDraft({ ...draft, title: e.target.value })}
@@ -254,7 +263,7 @@ export default function JobsView({
                     className="w-full rounded-lg border border-slate-200 px-3 py-2 text-xs outline-none focus:border-brand-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
                   />
                 </Field>
-                <Field label="Client">
+                <Field label={t('jobs.field.client')}>
                   <input
                     value={draft.client}
                     onChange={(e) => setDraft({ ...draft, client: e.target.value })}
@@ -262,7 +271,7 @@ export default function JobsView({
                     className="w-full rounded-lg border border-slate-200 px-3 py-2 text-xs outline-none focus:border-brand-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
                   />
                 </Field>
-                <Field label="Department">
+                <Field label={t('jobs.field.department')}>
                   <input
                     value={draft.department}
                     onChange={(e) => setDraft({ ...draft, department: e.target.value })}
@@ -270,14 +279,14 @@ export default function JobsView({
                     className="w-full rounded-lg border border-slate-200 px-3 py-2 text-xs outline-none focus:border-brand-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
                   />
                 </Field>
-                <Field label="Location">
+                <Field label={t('jobs.field.location')}>
                   <input
                     value={draft.location}
                     onChange={(e) => setDraft({ ...draft, location: e.target.value })}
                     className="w-full rounded-lg border border-slate-200 px-3 py-2 text-xs outline-none focus:border-brand-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
                   />
                 </Field>
-                <Field label="Branch">
+                <Field label={t('jobs.field.branch')}>
                   <select
                     value={draft.branch}
                     onChange={(e) => setDraft({ ...draft, branch: e.target.value })}
@@ -290,7 +299,7 @@ export default function JobsView({
                     <option value="Sur">Sur</option>
                   </select>
                 </Field>
-                <Field label="Employment Type">
+                <Field label={t('jobs.field.employmentType')}>
                   <select
                     value={draft.employment_type}
                     onChange={(e) =>
@@ -304,7 +313,7 @@ export default function JobsView({
                     <option value="internship">Internship</option>
                   </select>
                 </Field>
-                <Field label="Status">
+                <Field label={t('jobs.field.status')}>
                   <select
                     value={draft.status}
                     onChange={(e) => setDraft({ ...draft, status: e.target.value as any })}
@@ -316,7 +325,7 @@ export default function JobsView({
                     <option value="closed">Closed</option>
                   </select>
                 </Field>
-                <Field label="Openings">
+                <Field label={t('jobs.field.openings')}>
                   <input
                     type="number"
                     min={1}
@@ -327,7 +336,7 @@ export default function JobsView({
                     className="w-full rounded-lg border border-slate-200 px-3 py-2 text-xs outline-none focus:border-brand-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
                   />
                 </Field>
-                <Field label="Filled">
+                <Field label={t('jobs.field.filled')}>
                   <input
                     type="number"
                     min={0}
@@ -338,7 +347,7 @@ export default function JobsView({
                     className="w-full rounded-lg border border-slate-200 px-3 py-2 text-xs outline-none focus:border-brand-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
                   />
                 </Field>
-                <Field label="Salary Min (OMR)">
+                <Field label={t('jobs.field.salaryMin')}>
                   <input
                     type="number"
                     min={0}
@@ -349,7 +358,7 @@ export default function JobsView({
                     className="w-full rounded-lg border border-slate-200 px-3 py-2 text-xs outline-none focus:border-brand-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
                   />
                 </Field>
-                <Field label="Salary Max (OMR)">
+                <Field label={t('jobs.field.salaryMax')}>
                   <input
                     type="number"
                     min={0}
@@ -360,7 +369,7 @@ export default function JobsView({
                     className="w-full rounded-lg border border-slate-200 px-3 py-2 text-xs outline-none focus:border-brand-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
                   />
                 </Field>
-                <Field label="Closing Date">
+                <Field label={t('jobs.field.closingDate')}>
                   <input
                     type="date"
                     value={draft.closing_date}
@@ -370,17 +379,17 @@ export default function JobsView({
                 </Field>
               </div>
 
-              <Field label="Description" className="mt-3">
+              <Field label={t('jobs.field.description')} className="mt-3">
                 <textarea
                   value={draft.description}
                   onChange={(e) => setDraft({ ...draft, description: e.target.value })}
                   rows={3}
                   className="w-full rounded-lg border border-slate-200 px-3 py-2 text-xs outline-none focus:border-brand-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
-                  placeholder="Job description, scope, expectations..."
+                  placeholder={t('jobs.field.descPlaceholder')}
                 />
               </Field>
 
-              <Field label="Required Skills (comma-separated)" className="mt-3">
+              <Field label={t('jobs.field.requiredSkills')} className="mt-3">
                 <input
                   value={draft.skills_required.join(', ')}
                   onChange={(e) =>
@@ -402,13 +411,13 @@ export default function JobsView({
                 onClick={() => setShowForm(false)}
                 className="rounded-lg border border-slate-200 px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
               >
-                Cancel
+                {t('common.cancel')}
               </button>
               <button
                 onClick={save}
                 className="rounded-lg bg-brand-500 px-4 py-2 text-xs font-semibold text-white hover:bg-brand-600"
               >
-                {editingId ? 'Save Changes' : 'Create Job'}
+                {editingId ? t('cand.modal.saveChanges') : t('jobs.createJob')}
               </button>
             </div>
           </div>

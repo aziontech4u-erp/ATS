@@ -3,6 +3,7 @@ import { Plus, Calendar, Clock, Video, MapPin, X, Trash2, ExternalLink } from 'l
 import type { Interview, Candidate, JobPosting } from '../lib/types';
 import { uid } from '../lib/storage';
 import { formatDateTime, avatarColor, getInitials } from '../lib/utils';
+import { useUi } from '../lib/uiContext';
 
 interface InterviewsViewProps {
   interviews: Interview[];
@@ -43,9 +44,19 @@ export default function InterviewsView({
   onDeleteInterview,
   onToast
 }: InterviewsViewProps) {
+  const { t } = useUi();
   const [showForm, setShowForm] = useState(false);
   const [draft, setDraft] = useState(EMPTY);
   const [filter, setFilter] = useState<Interview['status'] | 'all' | 'upcoming'>('upcoming');
+  const FILTER_LABEL: Record<typeof filter, string> = {
+    upcoming: t('inter.upcoming'),
+    all: t('inter.all'),
+    scheduled: t('inter.scheduled'),
+    completed: t('inter.completed'),
+    cancelled: t('inter.cancelled'),
+    rescheduled: t('inter.scheduled'),
+    no_show: t('inter.cancelled')
+  };
 
   function save() {
     if (!draft.candidate_id) {
@@ -78,15 +89,15 @@ export default function InterviewsView({
     <div className="h-full overflow-y-auto bg-slate-50 p-5 dark:bg-slate-950">
       <div className="mb-4 flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-bold text-slate-900 dark:text-slate-100">Interviews</h1>
-          <p className="text-xs text-slate-500 dark:text-slate-400">{interviews.length} total interviews</p>
+          <h1 className="text-xl font-bold text-slate-900 dark:text-slate-100">{t('inter.title')}</h1>
+          <p className="text-xs text-slate-500 dark:text-slate-400">{t('inter.count', { n: interviews.length })}</p>
         </div>
         <button
           onClick={() => setShowForm(true)}
           className="flex items-center gap-1.5 rounded-lg bg-brand-500 px-4 py-2 text-xs font-semibold text-white hover:bg-brand-600"
         >
           <Plus size={14} />
-          Schedule Interview
+          {t('inter.schedule')}
         </button>
       </div>
 
@@ -101,7 +112,7 @@ export default function InterviewsView({
                 : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50 dark:bg-slate-900 dark:text-slate-300 dark:border-slate-700 dark:hover:bg-slate-800'
             }`}
           >
-            {s.charAt(0).toUpperCase() + s.slice(1)}
+            {FILTER_LABEL[s] ?? s}
           </button>
         ))}
       </div>
@@ -109,12 +120,12 @@ export default function InterviewsView({
       {filtered.length === 0 ? (
         <div className="rounded-xl border border-blue-100 bg-white py-16 text-center dark:border-slate-800 dark:bg-slate-900">
           <Calendar size={48} className="mx-auto mb-3 text-slate-300 dark:text-slate-600" />
-          <div className="text-sm font-semibold text-slate-500 dark:text-slate-300">No interviews</div>
+          <div className="text-sm font-semibold text-slate-500 dark:text-slate-300">{t('inter.empty')}</div>
           <button
             onClick={() => setShowForm(true)}
             className="mt-3 rounded-lg bg-brand-500 px-4 py-2 text-xs font-semibold text-white"
           >
-            Schedule first interview
+            {t('inter.scheduleFirst')}
           </button>
         </div>
       ) : (
@@ -167,7 +178,7 @@ export default function InterviewsView({
                       </span>
                       {i.interviewer && (
                         <span>
-                          <strong>Interviewer:</strong> {i.interviewer}
+                          <strong>{t('inter.interviewer')}:</strong> {i.interviewer}
                         </span>
                       )}
                       {i.location && (
@@ -184,14 +195,14 @@ export default function InterviewsView({
                           className="flex items-center gap-1 text-brand-500 hover:underline dark:text-blue-300"
                         >
                           <Video size={11} />
-                          Join meeting
+                          {t('inter.joinMeeting')}
                           <ExternalLink size={9} />
                         </a>
                       )}
                     </div>
                     {i.feedback && (
                       <div className="mt-2 rounded-lg bg-slate-50 p-2 text-[11px] text-slate-600 dark:bg-slate-800 dark:text-slate-300">
-                        <strong>Feedback:</strong> {i.feedback}
+                        <strong>{t('inter.feedback')}:</strong> {i.feedback}
                       </div>
                     )}
                     <div className="mt-2 flex gap-2">
@@ -210,9 +221,9 @@ export default function InterviewsView({
                       </select>
                       <button
                         onClick={() => {
-                          if (confirm('Delete interview?')) {
+                          if (confirm(t('inter.confirmDelete'))) {
                             onDeleteInterview(i.id);
-                            onToast('Interview deleted', 'success');
+                            onToast(t('inter.deletedToast'), 'success');
                           }
                         }}
                         className="rounded p-1 text-slate-500 hover:bg-rose-50 hover:text-rose-600 dark:text-slate-400 dark:hover:bg-rose-900/30 dark:hover:text-rose-300"
@@ -233,7 +244,7 @@ export default function InterviewsView({
         <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/40 p-4 fade-in">
           <div className="w-full max-w-lg rounded-xl bg-white shadow-2xl dark:bg-slate-900">
             <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4 dark:border-slate-800">
-              <div className="text-base font-bold text-slate-900 dark:text-slate-100">Schedule Interview</div>
+              <div className="text-base font-bold text-slate-900 dark:text-slate-100">{t('inter.modalTitle')}</div>
               <button onClick={() => setShowForm(false)} className="text-slate-400 hover:text-slate-700 dark:hover:text-slate-200">
                 <X size={18} />
               </button>
@@ -241,7 +252,7 @@ export default function InterviewsView({
             <div className="space-y-3 p-5">
               <div>
                 <label className="mb-1 block text-[10px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                  Candidate*
+                  {t('inter.field.candidate')}
                 </label>
                 <select
                   value={draft.candidate_id}
@@ -258,7 +269,7 @@ export default function InterviewsView({
               </div>
               <div>
                 <label className="mb-1 block text-[10px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                  Job (optional)
+                  {t('inter.field.job')}
                 </label>
                 <select
                   value={draft.job_id}
@@ -276,24 +287,24 @@ export default function InterviewsView({
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="mb-1 block text-[10px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                    Type
+                    {t('inter.field.type')}
                   </label>
                   <select
                     value={draft.type}
                     onChange={(e) => setDraft({ ...draft, type: e.target.value as any })}
                     className="w-full rounded-lg border border-slate-200 px-3 py-2 text-xs outline-none focus:border-brand-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
                   >
-                    <option value="phone">Phone</option>
-                    <option value="video">Video</option>
-                    <option value="technical">Technical</option>
-                    <option value="panel">Panel</option>
-                    <option value="final">Final</option>
-                    <option value="cultural">Cultural Fit</option>
+                    <option value="phone">{t('inter.type.phone')}</option>
+                    <option value="video">{t('inter.type.video')}</option>
+                    <option value="technical">{t('inter.type.technical')}</option>
+                    <option value="panel">{t('inter.type.panel')}</option>
+                    <option value="final">{t('inter.type.final')}</option>
+                    <option value="cultural">{t('inter.type.cultural')}</option>
                   </select>
                 </div>
                 <div>
                   <label className="mb-1 block text-[10px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                    Duration (min)
+                    {t('inter.field.duration')}
                   </label>
                   <input
                     type="number"
@@ -307,7 +318,7 @@ export default function InterviewsView({
               </div>
               <div>
                 <label className="mb-1 block text-[10px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                  Scheduled At*
+                  {t('inter.field.scheduledAt')}
                 </label>
                 <input
                   type="datetime-local"
@@ -318,7 +329,7 @@ export default function InterviewsView({
               </div>
               <div>
                 <label className="mb-1 block text-[10px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                  Interviewer
+                  {t('inter.field.interviewer')}
                 </label>
                 <input
                   value={draft.interviewer}
@@ -329,7 +340,7 @@ export default function InterviewsView({
               </div>
               <div>
                 <label className="mb-1 block text-[10px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                  Location
+                  {t('inter.field.location')}
                 </label>
                 <input
                   value={draft.location}
@@ -340,7 +351,7 @@ export default function InterviewsView({
               </div>
               <div>
                 <label className="mb-1 block text-[10px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                  Meeting Link
+                  {t('inter.field.meetingLink')}
                 </label>
                 <input
                   value={draft.meeting_link}
@@ -355,13 +366,13 @@ export default function InterviewsView({
                 onClick={() => setShowForm(false)}
                 className="rounded-lg border border-slate-200 px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
               >
-                Cancel
+                {t('common.cancel')}
               </button>
               <button
                 onClick={save}
                 className="rounded-lg bg-brand-500 px-4 py-2 text-xs font-semibold text-white hover:bg-brand-600"
               >
-                Schedule
+                {t('inter.schedule')}
               </button>
             </div>
           </div>

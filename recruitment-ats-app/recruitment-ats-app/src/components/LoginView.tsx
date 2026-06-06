@@ -103,7 +103,7 @@ export default function LoginView() {
             className="mt-2 flex w-full items-center justify-center gap-2 rounded-lg bg-brand-500 px-4 py-2.5 text-xs font-semibold text-white hover:bg-brand-600 disabled:opacity-60"
           >
             {busy ? <Loader2 size={14} className="animate-spin" /> : <LogIn size={14} />}
-            {t('login.signin')}
+            {busy ? t('login.signingIn') : t('login.signin')}
           </button>
         </form>
       </div>

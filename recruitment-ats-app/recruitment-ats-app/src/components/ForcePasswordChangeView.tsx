@@ -3,7 +3,7 @@ import {
   Lock, KeyRound, AlertTriangle, CheckCircle2, Loader2, Eye, EyeOff, LogOut
 } from 'lucide-react';
 import { useUi } from '../lib/uiContext';
-import { passwordScore, STRENGTH_LABELS } from '../lib/auth';
+import { passwordScore } from '../lib/auth';
 
 /**
  * Full-screen forced password change. Rendered when user.mustChangePassword
@@ -11,7 +11,7 @@ import { passwordScore, STRENGTH_LABELS } from '../lib/auth';
  * away from the initial / seeded password.
  */
 export default function ForcePasswordChangeView() {
-  const { user, changePassword, signOut, theme, toggleTheme } = useUi();
+  const { user, changePassword, signOut, theme, toggleTheme, t } = useUi();
   const [current, setCurrent] = useState('');
   const [next, setNext] = useState('');
   const [confirm, setConfirm] = useState('');
@@ -22,7 +22,7 @@ export default function ForcePasswordChangeView() {
   const [done, setDone] = useState(false);
 
   const score = passwordScore(next);
-  const strengthLabel = STRENGTH_LABELS[score] ?? '';
+  const strengthLabel = t('pw.strength.' + score);
   const strengthColor = ['bg-rose-500', 'bg-rose-400', 'bg-amber-400', 'bg-lime-500', 'bg-green-500'][score] || 'bg-slate-300';
 
   async function submit(e: React.FormEvent) {
@@ -30,7 +30,7 @@ export default function ForcePasswordChangeView() {
     if (busy) return;
     setErr(null);
     if (next !== confirm) {
-      setErr('New password and confirmation do not match.');
+      setErr(t('pw.mismatch'));
       return;
     }
     setBusy(true);
@@ -56,10 +56,10 @@ export default function ForcePasswordChangeView() {
         </button>
         <button
           onClick={signOut}
-          title="Sign Out"
+          title={t('login.signOut')}
           className="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-2.5 py-2 text-xs font-semibold text-slate-600 shadow-sm hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
         >
-          <LogOut size={13} /> Sign Out
+          <LogOut size={13} /> {t('login.signOut')}
         </button>
       </div>
 
@@ -69,10 +69,9 @@ export default function ForcePasswordChangeView() {
             <KeyRound size={22} />
           </div>
           <div>
-            <h1 className="text-lg font-bold text-slate-900 dark:text-slate-50">Set a New Password</h1>
+            <h1 className="text-lg font-bold text-slate-900 dark:text-slate-50">{t('pw.title')}</h1>
             <p className="text-[11.5px] leading-relaxed text-slate-500 dark:text-slate-400">
-              You're signed in with the initial password. Choose a strong password
-              before continuing — the initial one will stop working once you save.
+              {t('pw.subtitle')}
             </p>
             {user?.email && (
               <div className="mt-1 text-[11px] font-mono text-slate-600 dark:text-slate-300">{user.email}</div>
@@ -83,14 +82,14 @@ export default function ForcePasswordChangeView() {
         {done ? (
           <div className="rounded-xl border border-green-200 bg-green-50 p-4 text-center dark:border-green-900/60 dark:bg-green-900/20">
             <CheckCircle2 size={28} className="mx-auto mb-2 text-green-700 dark:text-green-300" />
-            <div className="text-sm font-bold text-green-800 dark:text-green-200">Password updated</div>
+            <div className="text-sm font-bold text-green-800 dark:text-green-200">{t('pw.updated')}</div>
             <p className="mt-1 text-[11.5px] text-green-700 dark:text-green-300/80">
-              Loading the workspace…
+              {t('pw.loading')}
             </p>
           </div>
         ) : (
           <form onSubmit={submit} className="space-y-3">
-            <Field label="Current Password">
+            <Field label={t('pw.current')}>
               <div className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 focus-within:border-brand-500 dark:border-slate-700 dark:bg-slate-800">
                 <Lock size={13} className="text-slate-400" />
                 <input
@@ -108,7 +107,7 @@ export default function ForcePasswordChangeView() {
               </div>
             </Field>
 
-            <Field label="New Password">
+            <Field label={t('pw.new')}>
               <div className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 focus-within:border-brand-500 dark:border-slate-700 dark:bg-slate-800">
                 <KeyRound size={13} className="text-slate-400" />
                 <input
@@ -138,11 +137,11 @@ export default function ForcePasswordChangeView() {
                 </span>
               </div>
               <p className="mt-1 text-[10.5px] leading-relaxed text-slate-500 dark:text-slate-400">
-                10+ characters with upper, lower, digit and symbol.
+                {t('pw.hint')}
               </p>
             </Field>
 
-            <Field label="Confirm New Password">
+            <Field label={t('pw.confirm')}>
               <div className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 focus-within:border-brand-500 dark:border-slate-700 dark:bg-slate-800">
                 <KeyRound size={13} className="text-slate-400" />
                 <input
@@ -169,7 +168,7 @@ export default function ForcePasswordChangeView() {
               className="mt-2 flex w-full items-center justify-center gap-2 rounded-lg bg-brand-500 px-4 py-2.5 text-xs font-semibold text-white hover:bg-brand-600 disabled:opacity-60"
             >
               {busy ? <Loader2 size={14} className="animate-spin" /> : <KeyRound size={14} />}
-              {busy ? 'Saving…' : 'Update Password & Continue'}
+              {busy ? t('pw.saving') : t('pw.updateContinue')}
             </button>
           </form>
         )}

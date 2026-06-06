@@ -3,6 +3,7 @@ import { Plus, FileSignature, X, Trash2, Send, Check, AlertCircle } from 'lucide
 import type { OfferLetter, Candidate, JobPosting } from '../lib/types';
 import { uid } from '../lib/storage';
 import { formatDate, formatCurrency, avatarColor, getInitials } from '../lib/utils';
+import { useUi } from '../lib/uiContext';
 
 interface OffersViewProps {
   offers: OfferLetter[];
@@ -49,9 +50,19 @@ export default function OffersView({
   onDeleteOffer,
   onToast
 }: OffersViewProps) {
+  const { t } = useUi();
   const [showForm, setShowForm] = useState(false);
   const [draft, setDraft] = useState(EMPTY);
   const [filter, setFilter] = useState<OfferLetter['status'] | 'all'>('all');
+  const STATUS_LABEL: Record<typeof filter, string> = {
+    all: t('jobs.all'),
+    draft: t('offers.status.draft'),
+    sent: t('offers.status.sent'),
+    accepted: t('offers.status.accepted'),
+    rejected: t('offers.status.rejected'),
+    expired: t('offers.status.expired'),
+    withdrawn: t('offers.status.withdrawn')
+  };
 
   function save() {
     if (!draft.candidate_id) {
@@ -112,15 +123,15 @@ ${o.benefits.length ? `<div class="row"><span>Benefits</span><b>${o.benefits.joi
     <div className="h-full overflow-y-auto bg-slate-50 p-5 dark:bg-slate-950">
       <div className="mb-4 flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-bold text-slate-900 dark:text-slate-100">Offer Letters</h1>
-          <p className="text-xs text-slate-500 dark:text-slate-400">{offers.length} offers</p>
+          <h1 className="text-xl font-bold text-slate-900 dark:text-slate-100">{t('offers.title')}</h1>
+          <p className="text-xs text-slate-500 dark:text-slate-400">{t('offers.count', { n: offers.length })}</p>
         </div>
         <button
           onClick={() => setShowForm(true)}
           className="flex items-center gap-1.5 rounded-lg bg-brand-500 px-4 py-2 text-xs font-semibold text-white hover:bg-brand-600"
         >
           <Plus size={14} />
-          New Offer
+          {t('offers.new')}
         </button>
       </div>
 
@@ -135,7 +146,7 @@ ${o.benefits.length ? `<div class="row"><span>Benefits</span><b>${o.benefits.joi
                 : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50 dark:bg-slate-900 dark:text-slate-300 dark:border-slate-700 dark:hover:bg-slate-800'
             }`}
           >
-            {s.charAt(0).toUpperCase() + s.slice(1)}
+            {STATUS_LABEL[s] ?? s}
           </button>
         ))}
       </div>
@@ -143,12 +154,12 @@ ${o.benefits.length ? `<div class="row"><span>Benefits</span><b>${o.benefits.joi
       {filtered.length === 0 ? (
         <div className="rounded-xl border border-blue-100 bg-white py-16 text-center dark:border-slate-800 dark:bg-slate-900">
           <FileSignature size={48} className="mx-auto mb-3 text-slate-300 dark:text-slate-600" />
-          <div className="text-sm font-semibold text-slate-500 dark:text-slate-300">No offers yet</div>
+          <div className="text-sm font-semibold text-slate-500 dark:text-slate-300">{t('offers.empty')}</div>
           <button
             onClick={() => setShowForm(true)}
             className="mt-3 rounded-lg bg-brand-500 px-4 py-2 text-xs font-semibold text-white"
           >
-            Create first offer
+            {t('offers.createFirst')}
           </button>
         </div>
       ) : (
@@ -188,8 +199,8 @@ ${o.benefits.length ? `<div class="row"><span>Benefits</span><b>${o.benefits.joi
                       <span>
                         <strong>{formatCurrency(o.salary, o.currency)}</strong>/mo
                       </span>
-                      <span>Start: {formatDate(o.start_date)}</span>
-                      <span>Expires: {formatDate(o.expiry_date)}</span>
+                      <span>{t('offers.startLabel')}: {formatDate(o.start_date)}</span>
+                      <span>{t('offers.expiresLabel')}: {formatDate(o.expiry_date)}</span>
                     </div>
                     {o.benefits.length > 0 && (
                       <div className="mt-1.5 flex flex-wrap gap-1">
@@ -208,7 +219,7 @@ ${o.benefits.length ? `<div class="row"><span>Benefits</span><b>${o.benefits.joi
                         onClick={() => previewLetter(o)}
                         className="rounded-lg bg-blue-50 px-2.5 py-1 text-[10px] font-semibold text-brand-500 hover:bg-blue-100 dark:bg-blue-900/30 dark:text-blue-300 dark:hover:bg-blue-900/50"
                       >
-                        📄 Preview Letter
+                        📄 {t('offers.previewLetter')}
                       </button>
                       <select
                         value={o.status}
@@ -232,9 +243,9 @@ ${o.benefits.length ? `<div class="row"><span>Benefits</span><b>${o.benefits.joi
                       </select>
                       <button
                         onClick={() => {
-                          if (confirm('Delete this offer?')) {
+                          if (confirm(t('offers.confirmDelete'))) {
                             onDeleteOffer(o.id);
-                            onToast('Offer deleted', 'success');
+                            onToast(t('offers.deletedToast'), 'success');
                           }
                         }}
                         className="rounded p-1 text-slate-500 hover:bg-rose-50 hover:text-rose-600 dark:text-slate-400 dark:hover:bg-rose-900/30 dark:hover:text-rose-300"
@@ -255,7 +266,7 @@ ${o.benefits.length ? `<div class="row"><span>Benefits</span><b>${o.benefits.joi
         <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/40 p-4 fade-in">
           <div className="w-full max-w-lg rounded-xl bg-white shadow-2xl dark:bg-slate-900">
             <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4 dark:border-slate-800">
-              <div className="text-base font-bold text-slate-900 dark:text-slate-100">New Offer Letter</div>
+              <div className="text-base font-bold text-slate-900 dark:text-slate-100">{t('offers.modalTitle')}</div>
               <button onClick={() => setShowForm(false)} className="text-slate-400 hover:text-slate-700 dark:hover:text-slate-200">
                 <X size={18} />
               </button>
@@ -263,7 +274,7 @@ ${o.benefits.length ? `<div class="row"><span>Benefits</span><b>${o.benefits.joi
             <div className="space-y-3 p-5">
               <div>
                 <label className="mb-1 block text-[10px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                  Candidate*
+                  {t('offers.field.candidate')}
                 </label>
                 <select
                   value={draft.candidate_id}
@@ -288,7 +299,7 @@ ${o.benefits.length ? `<div class="row"><span>Benefits</span><b>${o.benefits.joi
               </div>
               <div>
                 <label className="mb-1 block text-[10px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                  Position*
+                  {t('offers.field.position')}
                 </label>
                 <input
                   value={draft.position}
@@ -299,7 +310,7 @@ ${o.benefits.length ? `<div class="row"><span>Benefits</span><b>${o.benefits.joi
               </div>
               <div>
                 <label className="mb-1 block text-[10px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                  Job (optional)
+                  {t('offers.field.job')}
                 </label>
                 <select
                   value={draft.job_id}
@@ -317,7 +328,7 @@ ${o.benefits.length ? `<div class="row"><span>Benefits</span><b>${o.benefits.joi
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="mb-1 block text-[10px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                    Salary
+                    {t('offers.field.salary')}
                   </label>
                   <input
                     type="number"
@@ -330,7 +341,7 @@ ${o.benefits.length ? `<div class="row"><span>Benefits</span><b>${o.benefits.joi
                 </div>
                 <div>
                   <label className="mb-1 block text-[10px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                    Currency
+                    {t('offers.field.currency')}
                   </label>
                   <select
                     value={draft.currency}
@@ -345,7 +356,7 @@ ${o.benefits.length ? `<div class="row"><span>Benefits</span><b>${o.benefits.joi
                 </div>
                 <div>
                   <label className="mb-1 block text-[10px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                    Start Date
+                    {t('offers.field.startDate')}
                   </label>
                   <input
                     type="date"
@@ -356,7 +367,7 @@ ${o.benefits.length ? `<div class="row"><span>Benefits</span><b>${o.benefits.joi
                 </div>
                 <div>
                   <label className="mb-1 block text-[10px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                    Expiry Date
+                    {t('offers.field.expiryDate')}
                   </label>
                   <input
                     type="date"
@@ -368,7 +379,7 @@ ${o.benefits.length ? `<div class="row"><span>Benefits</span><b>${o.benefits.joi
               </div>
               <div>
                 <label className="mb-1 block text-[10px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                  Benefits (comma-separated)
+                  {t('offers.field.benefits')}
                 </label>
                 <input
                   value={draft.benefits.join(', ')}
@@ -378,21 +389,21 @@ ${o.benefits.length ? `<div class="row"><span>Benefits</span><b>${o.benefits.joi
                       benefits: e.target.value.split(',').map((s) => s.trim()).filter(Boolean)
                     })
                   }
-                  placeholder="e.g. Medical, Annual Leave 30 days, Air Ticket"
+                  placeholder={t('offers.field.benefitsPlaceholder')}
                   className="w-full rounded-lg border border-slate-200 px-3 py-2 text-xs outline-none focus:border-brand-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
                 />
               </div>
               <div>
                 <label className="mb-1 block text-[10px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                  Initial Status
+                  {t('offers.field.initialStatus')}
                 </label>
                 <select
                   value={draft.status}
                   onChange={(e) => setDraft({ ...draft, status: e.target.value as any })}
                   className="w-full rounded-lg border border-slate-200 px-3 py-2 text-xs outline-none focus:border-brand-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
                 >
-                  <option value="draft">Draft</option>
-                  <option value="sent">Sent</option>
+                  <option value="draft">{t('offers.status.draft')}</option>
+                  <option value="sent">{t('offers.status.sent')}</option>
                 </select>
               </div>
             </div>
@@ -401,13 +412,13 @@ ${o.benefits.length ? `<div class="row"><span>Benefits</span><b>${o.benefits.joi
                 onClick={() => setShowForm(false)}
                 className="rounded-lg border border-slate-200 px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
               >
-                Cancel
+                {t('common.cancel')}
               </button>
               <button
                 onClick={save}
                 className="rounded-lg bg-brand-500 px-4 py-2 text-xs font-semibold text-white hover:bg-brand-600"
               >
-                Create Offer
+                {t('offers.create')}
               </button>
             </div>
           </div>

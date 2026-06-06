@@ -13,6 +13,8 @@ import {
 } from '../lib/utils';
 import NationalityAutocomplete from './NationalityAutocomplete';
 import { useUi } from '../lib/uiContext';
+import MergeCandidatesModal from './MergeCandidatesModal';
+import { GitMerge } from 'lucide-react';
 import {
   buildIntakeUrl, buildMailtoUrl, buildWhatsAppUrl,
   computeScreeningFlags, buildIntakeSummary, intakeMessageTemplate
@@ -124,6 +126,27 @@ export default function CandidatesView({
   // Modal state
   const [mode, setMode] = useState<ModalMode>(null);
   const [draft, setDraft] = useState<Candidate>(blankCandidate());
+  // Merge state: primary + optional pre-selected secondary
+  const [mergeState, setMergeState] = useState<{ primary: Candidate; secondary: Candidate | null } | null>(null);
+
+  function openMergeFor(c: Candidate) {
+    setMergeState({ primary: c, secondary: null });
+  }
+  function openMergePair(a: Candidate, b: Candidate) {
+    setMergeState({ primary: a, secondary: b });
+  }
+  function applyMerge(merged: Candidate, removeId: string) {
+    onUpdateCandidate(merged.id, merged);
+    onDeleteCandidate(removeId);
+    setSelected((prev) => {
+      const next = new Set(prev);
+      next.delete(merged.id);
+      next.delete(removeId);
+      return next;
+    });
+    setMergeState(null);
+    onToast(t('merge.done'), 'success');
+  }
 
   // Distinct values for filter dropdowns
   const nationalities = useMemo(() => {
@@ -355,12 +378,12 @@ export default function CandidatesView({
 
   // Options for multi-selects
   const stageOpts: { value: Stage; label: string }[] = [
-    { value: 'applied',   label: 'Applied' },
-    { value: 'screening', label: 'Screening' },
-    { value: 'interview', label: 'Interview' },
-    { value: 'offer',     label: 'Offer' },
-    { value: 'hired',     label: 'Hired' },
-    { value: 'rejected',  label: 'Rejected' }
+    { value: 'applied',   label: t('stage.applied') },
+    { value: 'screening', label: t('stage.screening') },
+    { value: 'interview', label: t('stage.interview') },
+    { value: 'offer',     label: t('stage.offer') },
+    { value: 'hired',     label: t('stage.hired') },
+    { value: 'rejected',  label: t('stage.rejected') }
   ];
   const scoreOpts: { value: ScoreBand; label: string }[] = [
     { value: '80+',   label: 'Score 80+' },
@@ -474,6 +497,19 @@ export default function CandidatesView({
             {t('cand.selected', { n: selected.size })}
           </div>
           <div className="flex flex-wrap gap-2">
+            {selected.size === 2 && (
+              <button
+                onClick={() => {
+                  const [aId, bId] = [...selected];
+                  const a = candidates.find((c) => c.id === aId);
+                  const b = candidates.find((c) => c.id === bId);
+                  if (a && b) openMergePair(a, b);
+                }}
+                className="flex items-center gap-1 rounded-md bg-purple-500 px-2.5 py-1.5 text-[11px] font-semibold text-white hover:bg-purple-600"
+              >
+                <GitMerge size={12} /> {t('cand.merge')}
+              </button>
+            )}
             <button onClick={exportCSV} className="flex items-center gap-1 rounded-md bg-white px-2.5 py-1.5 text-[11px] font-semibold text-brand-500 hover:bg-blue-50 border border-blue-200 dark:bg-slate-800 dark:border-slate-700 dark:text-blue-300">
               <Download size={12} /> CSV
             </button>
@@ -495,18 +531,16 @@ export default function CandidatesView({
         {filtered.length === 0 ? (
           <div className="py-16 text-center">
             <Users size={48} className="mx-auto mb-3 text-slate-300 dark:text-slate-600" />
-            <div className="text-sm font-semibold text-slate-500 dark:text-slate-300">No candidates found</div>
+            <div className="text-sm font-semibold text-slate-500 dark:text-slate-300">{t('cand.empty')}</div>
             <p className="mt-1 text-xs text-slate-400 dark:text-slate-500">
-              {candidates.length === 0
-                ? 'Add a candidate manually or upload resumes via the Resume Parser'
-                : 'Try changing your filters'}
+              {candidates.length === 0 ? t('cand.emptyHint.upload') : t('cand.emptyHint.filter')}
             </p>
             {candidates.length === 0 && (
               <button
                 onClick={openCreate}
                 className="mt-4 inline-flex items-center gap-1.5 rounded-lg bg-brand-500 px-4 py-2 text-xs font-semibold text-white"
               >
-                <UserPlus size={13} /> Add First Candidate
+                <UserPlus size={13} /> {t('cand.addFirst')}
               </button>
             )}
           </div>
@@ -636,31 +670,38 @@ export default function CandidatesView({
                         <div className="flex justify-end gap-1">
                           <button
                             onClick={() => openView(c)}
-                            title="View profile"
+                            title={t('cand.viewProfile')}
                             className="rounded p-1 text-slate-500 hover:bg-blue-50 hover:text-brand-500 dark:text-slate-400 dark:hover:bg-blue-900/30 dark:hover:text-blue-300"
                           >
                             <Eye size={14} />
                           </button>
                           <button
                             onClick={() => openEdit(c)}
-                            title="Edit"
+                            title={t('cand.edit')}
                             className="rounded p-1 text-slate-500 hover:bg-green-50 hover:text-green-700 dark:text-slate-400 dark:hover:bg-green-900/30 dark:hover:text-green-300"
                           >
                             <Edit2 size={14} />
                           </button>
                           <button
+                            onClick={() => openMergeFor(c)}
+                            title={t('cand.mergeWith')}
+                            className="rounded p-1 text-slate-500 hover:bg-purple-50 hover:text-purple-700 dark:text-slate-400 dark:hover:bg-purple-900/30 dark:hover:text-purple-300"
+                          >
+                            <GitMerge size={14} />
+                          </button>
+                          <button
                             onClick={() => {
-                              if (confirm(`Delete ${c.personal.full_name}?`)) {
+                              if (confirm(t('cand.confirmDelete', { name: c.personal.full_name }))) {
                                 onDeleteCandidate(c.id);
                                 setSelected((prev) => {
                                   const next = new Set(prev);
                                   next.delete(c.id);
                                   return next;
                                 });
-                                onToast('Candidate deleted', 'success');
+                                onToast(t('cand.deletedToast'), 'success');
                               }
                             }}
-                            title="Delete"
+                            title={t('cand.delete')}
                             className="rounded p-1 text-slate-500 hover:bg-rose-50 hover:text-rose-600 dark:text-slate-400 dark:hover:bg-rose-900/30 dark:hover:text-rose-300"
                           >
                             <Trash2 size={14} />
@@ -686,6 +727,17 @@ export default function CandidatesView({
           onSave={saveCandidate}
           onClose={closeModal}
           onSwitchToEdit={() => setMode('edit')}
+        />
+      )}
+
+      {/* ── Merge Modal ── */}
+      {mergeState && (
+        <MergeCandidatesModal
+          primary={mergeState.primary}
+          secondary={mergeState.secondary}
+          candidates={candidates}
+          onMerge={applyMerge}
+          onClose={() => setMergeState(null)}
         />
       )}
     </div>
@@ -883,6 +935,7 @@ type Tab = 'personal' | 'professional' | 'skills' | 'experience' | 'education' |
 function CandidateModal({
   mode, draft, setDraft, jobs, onSave, onClose, onSwitchToEdit
 }: ModalProps) {
+  const { t } = useUi();
   const [tab, setTab] = useState<Tab>('personal');
   const readOnly = mode === 'view';
 
@@ -904,9 +957,9 @@ function CandidateModal({
   };
 
   const title = {
-    create: 'Add New Candidate',
-    edit: `Edit ${draft.personal.full_name || 'Candidate'}`,
-    view: draft.personal.full_name || 'Candidate Profile'
+    create: t('cand.modal.create'),
+    edit: `${t('cand.modal.editPrefix')} ${draft.personal.full_name || t('cand.modal.candidate')}`,
+    view: draft.personal.full_name || t('cand.modal.candidate')
   }[mode];
 
   return (
@@ -927,8 +980,8 @@ function CandidateModal({
               <div className="text-base font-bold text-slate-900">{title}</div>
               <div className="text-[11px] text-slate-500">
                 {mode === 'view' && draft.current_title ? draft.current_title : null}
-                {mode === 'create' && 'Manual entry'}
-                {mode === 'edit' && 'Editing candidate details'}
+                {mode === 'create' && t('cand.modal.manualEntry')}
+                {mode === 'edit' && t('cand.modal.editing')}
               </div>
             </div>
           </div>
@@ -938,7 +991,7 @@ function CandidateModal({
                 onClick={onSwitchToEdit}
                 className="flex items-center gap-1.5 rounded-lg border border-blue-200 bg-blue-50 px-3 py-1.5 text-xs font-semibold text-brand-500 hover:bg-blue-100"
               >
-                <Edit2 size={13} /> Edit
+                <Edit2 size={13} /> {t('common.edit')}
               </button>
             )}
             <button onClick={onClose} className="text-slate-400 hover:text-slate-700">
@@ -950,13 +1003,13 @@ function CandidateModal({
         {/* Tabs */}
         <div className="flex flex-shrink-0 overflow-x-auto border-b border-slate-100 bg-slate-50">
           {([
-            ['personal', 'Personal', Mail],
-            ['professional', 'Professional', Briefcase],
-            ['skills', 'Skills', Award],
-            ['experience', 'Experience', Clock],
-            ['education', 'Education', Calendar],
-            ['intake', 'Intake / Send Form', Send],
-            ['notes', 'Notes', FileText]
+            ['personal', t('cand.tab.personal'), Mail],
+            ['professional', t('cand.tab.professional'), Briefcase],
+            ['skills', t('cand.tab.skills'), Award],
+            ['experience', t('cand.tab.experience'), Clock],
+            ['education', t('cand.tab.education'), Calendar],
+            ['intake', t('cand.tab.intake'), Send],
+            ['notes', t('cand.tab.notes'), FileText]
           ] as const).map(([k, label, Icon]) => (
             <button
               key={k}
@@ -1333,7 +1386,7 @@ function CandidateModal({
               onClick={onClose}
               className="rounded-lg border border-slate-200 px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-50"
             >
-              {readOnly ? 'Close' : 'Cancel'}
+              {readOnly ? t('common.close') : t('common.cancel')}
             </button>
             {!readOnly && (
               <button
@@ -1341,7 +1394,7 @@ function CandidateModal({
                 className="flex items-center gap-1.5 rounded-lg bg-brand-500 px-4 py-2 text-xs font-semibold text-white hover:bg-brand-600"
               >
                 <Save size={13} />
-                {mode === 'create' ? 'Add Candidate' : 'Save Changes'}
+                {mode === 'create' ? t('cand.modal.addCandidate') : t('cand.modal.saveChanges')}
               </button>
             )}
           </div>

@@ -12,7 +12,7 @@ import {
 } from '../lib/companySettings';
 import { useUi } from '../lib/uiContext';
 import { uid } from '../lib/storage';
-import { passwordScore, STRENGTH_LABELS } from '../lib/auth';
+import { passwordScore } from '../lib/auth';
 
 interface Props {
   onToast: (msg: string, type?: 'success' | 'error' | 'info') => void;
@@ -596,7 +596,7 @@ function BackupTab({
 // ── Change Password ─────────────────────────────────────────────
 
 function ChangePasswordCard() {
-  const { user, changePassword } = useUi();
+  const { user, changePassword, t } = useUi();
   const [current, setCurrent] = useState('');
   const [next, setNext] = useState('');
   const [confirm, setConfirm] = useState('');
@@ -606,14 +606,14 @@ function ChangePasswordCard() {
   const [ok, setOk] = useState(false);
 
   const score = passwordScore(next);
-  const label = STRENGTH_LABELS[score] ?? '';
+  const label = t('pw.strength.' + score);
   const color = ['bg-rose-500', 'bg-rose-400', 'bg-amber-400', 'bg-lime-500', 'bg-green-500'][score] || 'bg-slate-300';
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     if (busy) return;
     setErr(null); setOk(false);
-    if (next !== confirm) { setErr('New password and confirmation do not match.'); return; }
+    if (next !== confirm) { setErr(t('pw.mismatch')); return; }
     setBusy(true);
     const res = await changePassword(current, next);
     setBusy(false);
@@ -623,20 +623,20 @@ function ChangePasswordCard() {
   }
 
   return (
-    <Card title="Change Password">
+    <Card title={t('pw.title.security')}>
       <p className="mb-3 text-[11px] leading-relaxed text-slate-500 dark:text-slate-400">
-        Signed in as <code className="rounded bg-slate-100 px-1.5 py-0.5 text-[10.5px] dark:bg-slate-800">{user?.email}</code>.
-        Choose a strong new password — at least 10 characters with upper, lower, digit and symbol.
+        {t('pw.signedInAs')} <code className="rounded bg-slate-100 px-1.5 py-0.5 text-[10.5px] dark:bg-slate-800">{user?.email}</code>.{' '}
+        {t('pw.hint')}
       </p>
       <form onSubmit={submit} className="grid grid-cols-1 gap-3 md:grid-cols-3">
-        <PasswordField label="Current" value={current} onChange={setCurrent} show={show} autoComplete="current-password" />
-        <PasswordField label="New" value={next} onChange={setNext} show={show} autoComplete="new-password" minLength={10} />
-        <PasswordField label="Confirm New" value={confirm} onChange={setConfirm} show={show} autoComplete="new-password" />
+        <PasswordField label={t('pw.current')} value={current} onChange={setCurrent} show={show} autoComplete="current-password" />
+        <PasswordField label={t('pw.new')} value={next} onChange={setNext} show={show} autoComplete="new-password" minLength={10} />
+        <PasswordField label={t('pw.confirm')} value={confirm} onChange={setConfirm} show={show} autoComplete="new-password" />
       </form>
       <div className="mt-2 flex items-center gap-3">
         <label className="flex items-center gap-1.5 text-[10.5px] text-slate-500 dark:text-slate-400">
           <input type="checkbox" checked={show} onChange={(e) => setShow(e.target.checked)} className="h-3 w-3 accent-brand-500" />
-          Show passwords
+          {t('pw.show')}
         </label>
         {next && (
           <div className="flex flex-1 items-center gap-2">
@@ -656,7 +656,7 @@ function ChangePasswordCard() {
       )}
       {ok && (
         <div className="mt-3 flex items-start gap-2 rounded-lg border border-green-200 bg-green-50 px-3 py-2 text-[11.5px] text-green-700 dark:border-green-900/60 dark:bg-green-900/20 dark:text-green-300">
-          <CheckCircle2 size={13} className="mt-0.5 flex-shrink-0" />Password updated. Use the new one next time you sign in.
+          <CheckCircle2 size={13} className="mt-0.5 flex-shrink-0" />{t('pw.updated')}. {t('pw.updatedNext')}
         </div>
       )}
       <div className="mt-3 flex justify-end">
@@ -666,7 +666,7 @@ function ChangePasswordCard() {
           className="flex items-center gap-1.5 rounded-lg bg-brand-500 px-4 py-2 text-xs font-semibold text-white hover:bg-brand-600 disabled:opacity-60"
         >
           {busy ? <Loader2 size={13} className="animate-spin" /> : <KeyRound size={13} />}
-          Update Password
+          {t('pw.update')}
         </button>
       </div>
     </Card>

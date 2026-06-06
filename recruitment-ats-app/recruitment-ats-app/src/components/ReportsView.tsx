@@ -21,8 +21,8 @@ interface Props {
 }
 
 export default function ReportsView({ candidates, jobs, interviews, offers }: Props) {
-  const { user } = useUi();
-  const role: ReportRole = (user?.role as ReportRole) || 'demo';
+  const { user, t } = useUi();
+  const role: ReportRole = (user?.role as ReportRole) || 'admin';
 
   const [enabled, setEnabled] = useState<Record<ReportId, boolean>>(() => loadReportEnabled());
   const [filters, setFilters] = useState<ReportFilters>(EMPTY_FILTERS);
@@ -99,7 +99,7 @@ export default function ReportsView({ candidates, jobs, interviews, offers }: Pr
         <div className="flex items-center justify-between border-b border-blue-100 px-4 py-3 dark:border-slate-800">
           <div className="flex items-center gap-2">
             <BarChart3 size={15} className="text-brand-500" />
-            <span className="text-sm font-bold text-slate-900 dark:text-slate-100">Reports</span>
+            <span className="text-sm font-bold text-slate-900 dark:text-slate-100">{t('reports.title')}</span>
           </div>
           {role === 'admin' && (
             <button
@@ -114,9 +114,9 @@ export default function ReportsView({ candidates, jobs, interviews, offers }: Pr
         <nav className="flex-1 overflow-y-auto p-2">
           {available.length === 0 ? (
             <div className="px-3 py-8 text-center text-[11px] text-slate-400">
-              No reports enabled for your role.
+              {t('reports.noEnabled')}
               {role === 'admin' && (
-                <button onClick={() => setManaging(true)} className="mt-2 block w-full rounded bg-brand-500 px-3 py-1.5 text-[11px] font-semibold text-white">Manage</button>
+                <button onClick={() => setManaging(true)} className="mt-2 block w-full rounded bg-brand-500 px-3 py-1.5 text-[11px] font-semibold text-white">{t('reports.manage')}</button>
               )}
             </div>
           ) : (
@@ -146,8 +146,8 @@ export default function ReportsView({ candidates, jobs, interviews, offers }: Pr
         {/* Header */}
         <div className="flex flex-wrap items-center justify-between gap-2 border-b border-blue-100 bg-white px-5 py-3 dark:border-slate-800 dark:bg-slate-900">
           <div>
-            <h1 className="text-base font-bold text-slate-900 dark:text-slate-100">{activeDef?.name || 'Reports & Analytics'}</h1>
-            <p className="text-[11px] text-slate-500 dark:text-slate-400">{activeDef?.description || 'Pick a report on the left.'}</p>
+            <h1 className="text-base font-bold text-slate-900 dark:text-slate-100">{activeDef?.name || t('reports.title')}</h1>
+            <p className="text-[11px] text-slate-500 dark:text-slate-400">{activeDef?.description || t('reports.subtitle')}</p>
           </div>
           {activeDef && result && (
             <div className="flex flex-wrap gap-2">
@@ -168,45 +168,45 @@ export default function ReportsView({ candidates, jobs, interviews, offers }: Pr
         <div className="border-b border-blue-100 bg-white px-5 py-2.5 dark:border-slate-800 dark:bg-slate-900">
           <div className="flex flex-wrap items-center gap-2">
             <div className="flex items-center gap-1.5 text-[11px] font-semibold text-slate-500 dark:text-slate-400">
-              <Filter size={12} /> Filters
+              <Filter size={12} /> {t('reports.filters')}
             </div>
-            <FilterDate value={filters.fromDate} onChange={(v) => setFilter('fromDate', v)} placeholder="From" />
-            <FilterDate value={filters.toDate}   onChange={(v) => setFilter('toDate', v)}   placeholder="To" />
+            <FilterDate value={filters.fromDate} onChange={(v) => setFilter('fromDate', v)} placeholder={t('reports.filter.from')} />
+            <FilterDate value={filters.toDate}   onChange={(v) => setFilter('toDate', v)}   placeholder={t('reports.filter.to')} />
             <FilterSelect value={filters.jobId} onChange={(v) => setFilter('jobId', v)}>
-              <option value="">All Jobs</option>
+              <option value="">{t('reports.filter.allJobs')}</option>
               {jobs.map((j) => <option key={j.id} value={j.id}>{j.title}</option>)}
             </FilterSelect>
             <FilterSelect value={filters.status} onChange={(v) => setFilter('status', v as Stage | '')}>
-              <option value="">All Statuses</option>
-              <option value="applied">Applied</option>
-              <option value="screening">Screening</option>
-              <option value="interview">Interview</option>
-              <option value="offer">Offer</option>
-              <option value="hired">Hired</option>
-              <option value="rejected">Rejected</option>
+              <option value="">{t('reports.filter.allStatuses')}</option>
+              <option value="applied">{t('stage.applied')}</option>
+              <option value="screening">{t('stage.screening')}</option>
+              <option value="interview">{t('stage.interview')}</option>
+              <option value="offer">{t('stage.offer')}</option>
+              <option value="hired">{t('stage.hired')}</option>
+              <option value="rejected">{t('stage.rejected')}</option>
             </FilterSelect>
             <FilterSelect value={filters.recruiter} onChange={(v) => setFilter('recruiter', v)}>
-              <option value="">All Recruiters</option>
+              <option value="">{t('reports.filter.allRecruiters')}</option>
               {recruiters.map((r) => <option key={r} value={r}>{r}</option>)}
             </FilterSelect>
             <FilterSelect value={filters.nationality} onChange={(v) => setFilter('nationality', v)}>
-              <option value="">All Nationalities</option>
+              <option value="">{t('reports.filter.allNationalities')}</option>
               {nationalities.map((n) => <option key={n} value={n}>{n}</option>)}
             </FilterSelect>
             <FilterSelect value={filters.gender} onChange={(v) => setFilter('gender', v)}>
-              <option value="">All Genders</option>
+              <option value="">{t('reports.filter.allGenders')}</option>
               <option value="Male">Male</option>
               <option value="Female">Female</option>
               <option value="Other">Other</option>
             </FilterSelect>
             <FilterSelect value={filters.skill} onChange={(v) => setFilter('skill', v)}>
-              <option value="">All Skills</option>
+              <option value="">{t('reports.filter.allSkills')}</option>
               {skills.slice(0, 200).map((s) => <option key={s} value={s}>{s}</option>)}
             </FilterSelect>
             <input
               value={filters.location}
               onChange={(e) => setFilter('location', e.target.value)}
-              placeholder="Location contains…"
+              placeholder={t('reports.filter.locationContains')}
               className="rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-[11px] outline-none focus:border-brand-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
             />
             {Object.values(filters).some((v) => v) && (
@@ -214,7 +214,7 @@ export default function ReportsView({ candidates, jobs, interviews, offers }: Pr
                 onClick={clearFilters}
                 className="flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-[11px] font-semibold text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300"
               >
-                <X size={11} /> Clear
+                <X size={11} /> {t('reports.filter.clear')}
               </button>
             )}
           </div>
@@ -224,7 +224,7 @@ export default function ReportsView({ candidates, jobs, interviews, offers }: Pr
         <div className="flex-1 overflow-y-auto p-5">
           {!activeDef ? (
             <div className="rounded-xl border border-dashed border-slate-200 py-10 text-center text-xs text-slate-400 dark:border-slate-700">
-              No report selected
+              {t('reports.noSelected')}
             </div>
           ) : !result ? null : (
             <>
@@ -232,7 +232,7 @@ export default function ReportsView({ candidates, jobs, interviews, offers }: Pr
               {result.insights.length > 0 && (
                 <div className="mb-4 rounded-xl border border-blue-100 bg-gradient-to-br from-blue-50 to-indigo-50 p-4 dark:border-blue-900/50 dark:from-blue-900/20 dark:to-indigo-900/20">
                   <div className="mb-2 flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-brand-500 dark:text-blue-300">
-                    <Sparkles size={12} /> AI Insights
+                    <Sparkles size={12} /> {t('reports.insights')}
                   </div>
                   <ul className="space-y-1 text-xs text-slate-700 dark:text-slate-200">
                     {result.insights.map((line, i) => (
@@ -258,10 +258,10 @@ export default function ReportsView({ candidates, jobs, interviews, offers }: Pr
               {/* Table */}
               <div className="rounded-xl border border-blue-100 bg-white dark:border-slate-800 dark:bg-slate-900">
                 <div className="border-b border-slate-100 px-4 py-2 text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:border-slate-800 dark:text-slate-400">
-                  Details ({result.rows.length})
+                  {t('reports.details', { n: result.rows.length })}
                 </div>
                 {result.rows.length === 0 ? (
-                  <div className="px-4 py-10 text-center text-xs text-slate-400">No data matches the current filters.</div>
+                  <div className="px-4 py-10 text-center text-xs text-slate-400">{t('reports.noMatch')}</div>
                 ) : (
                   <div className="overflow-x-auto">
                     <table className="w-full text-xs">

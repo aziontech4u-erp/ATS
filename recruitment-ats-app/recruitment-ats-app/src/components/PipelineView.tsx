@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Briefcase } from 'lucide-react';
 import type { Candidate, Stage, JobPosting } from '../lib/types';
 import { stageColors, avatarColor, getInitials, scoreColor } from '../lib/utils';
+import { useUi } from '../lib/uiContext';
 
 const STAGES: Stage[] = ['applied', 'screening', 'interview', 'offer', 'hired', 'rejected'];
 
@@ -18,6 +19,7 @@ export default function PipelineView({
   onUpdateCandidate,
   onToast
 }: PipelineViewProps) {
+  const { t } = useUi();
   const [jobFilter, setJobFilter] = useState<string>('all');
   const [draggedId, setDraggedId] = useState<string | null>(null);
 
@@ -30,18 +32,27 @@ export default function PipelineView({
     const c = candidates.find((x) => x.id === draggedId);
     if (c && c.stage !== stage) {
       onUpdateCandidate(draggedId, { stage });
-      onToast(`Moved ${c.personal.full_name} → ${stage}`, 'success');
+      onToast(t('pipe.movedToast', { name: c.personal.full_name, stage: t('stage.' + stage) }), 'success');
     }
     setDraggedId(null);
   }
+
+  const stageLabel: Record<Stage, string> = {
+    applied: t('stage.applied'),
+    screening: t('stage.screening'),
+    interview: t('stage.interview'),
+    offer: t('stage.offer'),
+    hired: t('stage.hired'),
+    rejected: t('stage.rejected')
+  };
 
   return (
     <div className="flex h-full flex-col overflow-hidden bg-slate-50 dark:bg-slate-950">
       {/* Header */}
       <div className="flex flex-shrink-0 items-center justify-between border-b border-blue-100 bg-white px-5 py-3 dark:border-slate-800 dark:bg-slate-900">
         <div>
-          <h1 className="text-xl font-bold text-slate-900 dark:text-slate-100">Pipeline</h1>
-          <p className="text-xs text-slate-500 dark:text-slate-400">Drag candidates between stages</p>
+          <h1 className="text-xl font-bold text-slate-900 dark:text-slate-100">{t('pipe.title')}</h1>
+          <p className="text-xs text-slate-500 dark:text-slate-400">{t('pipe.subtitle')}</p>
         </div>
         <div className="flex items-center gap-2">
           <Briefcase size={13} className="text-slate-400" />
@@ -50,7 +61,7 @@ export default function PipelineView({
             onChange={(e) => setJobFilter(e.target.value)}
             className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs outline-none focus:border-brand-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
           >
-            <option value="all">All Jobs</option>
+            <option value="all">{t('pipe.allJobs')}</option>
             {jobs.map((j) => (
               <option key={j.id} value={j.id}>
                 {j.title}
@@ -78,7 +89,7 @@ export default function PipelineView({
                   style={{ background: style.bg }}
                 >
                   <div className="text-[11px] font-bold uppercase tracking-wider" style={{ color: style.fg }}>
-                    {style.label}
+                    {stageLabel[stage]}
                   </div>
                   <div
                     className="rounded-full bg-white px-2 py-0.5 text-[10px] font-bold"
@@ -90,7 +101,7 @@ export default function PipelineView({
                 <div className="flex-1 space-y-1.5 overflow-y-auto p-2">
                   {stageItems.length === 0 ? (
                     <div className="py-8 text-center text-[10px] text-slate-300 dark:text-slate-600">
-                      Drop here
+                      {t('pipe.dropHere')}
                     </div>
                   ) : (
                     stageItems.map((c) => {

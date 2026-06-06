@@ -11,6 +11,7 @@ import { uid } from '../lib/storage';
 import {
   getInitials, avatarColor, stageColors, scoreColor, scoreLabel
 } from '../lib/utils';
+import { useUi } from '../lib/uiContext';
 
 interface ResumeParserViewProps {
   candidates: Candidate[];
@@ -32,6 +33,7 @@ export default function ResumeParserView({
   onUpdateCandidate,
   onToast
 }: ResumeParserViewProps) {
+  const { t } = useUi();
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [tab, setTab] = useState<Tab>('profile');
   const [search, setSearch] = useState('');
@@ -265,10 +267,10 @@ export default function ResumeParserView({
               <Upload size={18} />
             </div>
             <div className="text-xs font-semibold text-slate-900 dark:text-slate-100">
-              {busy ? `Parsing: ${currentFile}` : 'Drop CV / Resume here'}
+              {busy ? t('parser.parsing', { file: currentFile }) : t('parser.dropTitle')}
             </div>
             <div className="mt-0.5 text-[10px] text-slate-500 dark:text-slate-400">
-              PDF · DOCX · TXT — AI auto-extracts data
+              {t('parser.dropSub')}
             </div>
           </div>
         </div>
@@ -277,7 +279,7 @@ export default function ResumeParserView({
         {bulkProgress.total > 1 && (
           <div className="mx-3 mb-2 rounded-lg border border-blue-200 bg-gradient-to-br from-blue-50 to-indigo-50 p-2.5 dark:border-blue-900/60 dark:from-blue-900/20 dark:to-indigo-900/20">
             <div className="mb-1.5 flex items-center justify-between text-[11px] font-bold">
-              <span className="text-brand-500 dark:text-blue-300">📦 Bulk Upload</span>
+              <span className="text-brand-500 dark:text-blue-300">📦 {t('parser.bulkUpload')}</span>
               <span className="text-slate-600 dark:text-slate-300">
                 {bulkProgress.current} / {bulkProgress.total}
               </span>
@@ -291,9 +293,9 @@ export default function ResumeParserView({
               />
             </div>
             <div className="mt-1.5 flex gap-3 text-[9px]">
-              <span className="font-semibold text-green-700 dark:text-green-400">✓ {bulkProgress.added} added</span>
+              <span className="font-semibold text-green-700 dark:text-green-400">✓ {t('parser.added', { n: bulkProgress.added })}</span>
               {bulkProgress.duplicates > 0 && (
-                <span className="font-semibold text-amber-700 dark:text-amber-300">⚠ {bulkProgress.duplicates} dupes</span>
+                <span className="font-semibold text-amber-700 dark:text-amber-300">⚠ {t('parser.dupes', { n: bulkProgress.duplicates })}</span>
               )}
             </div>
           </div>
@@ -302,7 +304,7 @@ export default function ResumeParserView({
         {/* Processing Steps */}
         {busy && (
           <div className="mx-3 mb-2 rounded-lg border border-slate-200 bg-slate-50 p-2 dark:border-slate-700 dark:bg-slate-800/50">
-            <div className="mb-1.5 text-[11px] font-bold text-brand-500 dark:text-blue-300">⚙ AI Parsing...</div>
+            <div className="mb-1.5 text-[11px] font-bold text-brand-500 dark:text-blue-300">⚙ {t('parser.aiParsing')}</div>
             {PROCESSING_STEPS.map((step, i) => {
               const done = i < currentStep;
               const active = i === currentStep;
@@ -344,7 +346,7 @@ export default function ResumeParserView({
           <input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search name, skill, role..."
+            placeholder={t('parser.searchPlaceholder')}
             className="w-full bg-transparent text-[11px] outline-none dark:text-slate-100"
           />
         </div>
@@ -375,10 +377,10 @@ export default function ResumeParserView({
             <div className="px-3 py-8 text-center text-slate-400 dark:text-slate-500">
               <FileText size={28} className="mx-auto mb-2 opacity-40" />
               <div className="text-[11px] font-semibold text-slate-500 dark:text-slate-400">
-                {sessionIds.size ? 'No matches' : 'Ready for upload'}
+                {sessionIds.size ? t('parser.noMatches') : t('parser.ready')}
               </div>
               <div className="mt-1 text-[10px]">
-                {sessionIds.size ? 'Try a different filter' : 'Drop resumes above — parsed items appear here, then move to Candidates'}
+                {sessionIds.size ? t('parser.tryFilter') : t('parser.readyHint')}
               </div>
             </div>
           ) : (
@@ -440,15 +442,15 @@ export default function ResumeParserView({
             className="flex flex-1 items-center justify-center gap-1.5 rounded-lg border border-blue-200 bg-blue-50 py-1.5 text-[11px] font-semibold text-brand-500 hover:bg-blue-100 disabled:opacity-50 disabled:cursor-not-allowed dark:border-blue-900/60 dark:bg-blue-900/30 dark:text-blue-300 dark:hover:bg-blue-900/50"
           >
             <Upload size={12} />
-            {busy ? 'Parsing…' : sessionIds.size > 0 ? `Add More (${sessionIds.size} parsed)` : 'Upload Resumes'}
+            {busy ? t('parser.parsingDots') : sessionIds.size > 0 ? t('parser.addMore', { n: sessionIds.size }) : t('parser.uploadResumes')}
           </button>
           {sessionIds.size > 0 && !busy && (
             <button
               onClick={clearSession}
-              title="Clear this batch — candidates remain saved in Candidates view"
+              title={t('parser.clear')}
               className="flex items-center justify-center gap-1 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-[11px] font-semibold text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
             >
-              <X size={12} /> Clear
+              <X size={12} /> {t('parser.clear')}
             </button>
           )}
         </div>
@@ -460,11 +462,10 @@ export default function ResumeParserView({
           <div className="flex flex-1 flex-col items-center justify-center text-center text-slate-400 dark:text-slate-500">
             <div className="mb-3 text-5xl">📄</div>
             <div className="mb-1 text-base font-semibold text-slate-500 dark:text-slate-400">
-              Upload a resume to get started
+              {t('parser.getStarted')}
             </div>
             <div className="max-w-sm text-xs text-slate-400 leading-relaxed dark:text-slate-500">
-              Drop any PDF, DOCX, or TXT file in the left panel. AI will extract all candidate data
-              automatically — no manual entry needed.
+              {t('parser.getStartedHint')}
             </div>
           </div>
         ) : (

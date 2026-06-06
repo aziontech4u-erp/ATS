@@ -1,23 +1,22 @@
 import { useState } from 'react';
-import { Sparkles, Mail, Lock, LogIn, Moon, Sun, Globe } from 'lucide-react';
-import { useUi, DEMO_EMAIL, DEMO_PASSWORD } from '../lib/uiContext';
+import { Sparkles, Mail, Lock, LogIn, Moon, Sun, Globe, Loader2 } from 'lucide-react';
+import { useUi } from '../lib/uiContext';
 
 export default function LoginView() {
   const { t, signIn, theme, toggleTheme, lang, setLang } = useUi();
-  const [email, setEmail] = useState(DEMO_EMAIL);
-  const [password, setPassword] = useState(DEMO_PASSWORD);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
-  function submit(e: React.FormEvent) {
+  async function submit(e: React.FormEvent) {
     e.preventDefault();
-    const res = signIn(email, password);
-    if (!res.ok) setErr(res.error);
-  }
-
-  function fillDemo() {
-    setEmail(DEMO_EMAIL);
-    setPassword(DEMO_PASSWORD);
+    if (busy) return;
+    setBusy(true);
     setErr(null);
+    const res = await signIn(email, password);
+    if (!res.ok) setErr(res.error);
+    setBusy(false);
   }
 
   return (
@@ -54,27 +53,6 @@ export default function LoginView() {
           </div>
         </div>
 
-        {/* Demo banner */}
-        <div className="mb-5 rounded-xl border border-amber-200 bg-amber-50 p-3 dark:border-amber-900/60 dark:bg-amber-900/20">
-          <div className="mb-1 flex items-center gap-2 text-[11px] font-bold uppercase tracking-wider text-amber-800 dark:text-amber-300">
-            <Sparkles size={12} />
-            {t('login.demoBanner')}
-          </div>
-          <div className="mb-2 text-[11px] leading-relaxed text-amber-800/80 dark:text-amber-200/80">
-            {t('login.demoNote')}
-            <div className="mt-1 font-mono text-[10.5px]">
-              {DEMO_EMAIL} / {DEMO_PASSWORD}
-            </div>
-          </div>
-          <button
-            type="button"
-            onClick={fillDemo}
-            className="rounded-lg border border-amber-300 bg-white px-3 py-1.5 text-[11px] font-semibold text-amber-800 hover:bg-amber-100 dark:border-amber-700 dark:bg-amber-900/40 dark:text-amber-200 dark:hover:bg-amber-900/60"
-          >
-            {t('login.useDemo')}
-          </button>
-        </div>
-
         <form onSubmit={submit} className="space-y-3">
           <label className="block">
             <span className="mb-1 block text-[10px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
@@ -89,7 +67,9 @@ export default function LoginView() {
                 className="flex-1 bg-transparent text-xs outline-none text-slate-900 dark:text-slate-100"
                 placeholder="name@company.com"
                 autoComplete="username"
+                autoFocus
                 required
+                disabled={busy}
               />
             </div>
           </label>
@@ -106,6 +86,7 @@ export default function LoginView() {
                 className="flex-1 bg-transparent text-xs outline-none text-slate-900 dark:text-slate-100"
                 autoComplete="current-password"
                 required
+                disabled={busy}
               />
             </div>
           </label>
@@ -118,9 +99,10 @@ export default function LoginView() {
 
           <button
             type="submit"
-            className="mt-2 flex w-full items-center justify-center gap-2 rounded-lg bg-brand-500 px-4 py-2.5 text-xs font-semibold text-white hover:bg-brand-600"
+            disabled={busy}
+            className="mt-2 flex w-full items-center justify-center gap-2 rounded-lg bg-brand-500 px-4 py-2.5 text-xs font-semibold text-white hover:bg-brand-600 disabled:opacity-60"
           >
-            <LogIn size={14} />
+            {busy ? <Loader2 size={14} className="animate-spin" /> : <LogIn size={14} />}
             {t('login.signin')}
           </button>
         </form>

@@ -11,10 +11,7 @@ export const dictionaries: Record<Lang, Record<string, string>> = {
     'login.email': 'Email',
     'login.password': 'Password',
     'login.signin': 'Sign In',
-    'login.demoBanner': 'Demo Account',
-    'login.useDemo': 'Use Demo Credentials',
-    'login.demoNote': 'For evaluation only. Data is stored locally in your browser.',
-    'login.invalid': 'Invalid credentials. Use the demo account or your provisioned login.',
+    'login.invalid': 'Invalid email or password.',
     'login.signOut': 'Sign Out',
 
     // Sidebar
@@ -91,10 +88,7 @@ export const dictionaries: Record<Lang, Record<string, string>> = {
     'login.email': 'البريد الإلكتروني',
     'login.password': 'كلمة المرور',
     'login.signin': 'تسجيل الدخول',
-    'login.demoBanner': 'حساب تجريبي',
-    'login.useDemo': 'استخدم بيانات الحساب التجريبي',
-    'login.demoNote': 'للتقييم فقط. تُخزَّن البيانات محلياً في متصفحك.',
-    'login.invalid': 'بيانات الدخول غير صحيحة. استخدم الحساب التجريبي أو حسابك المُخصَّص.',
+    'login.invalid': 'البريد الإلكتروني أو كلمة المرور غير صحيحة.',
     'login.signOut': 'تسجيل الخروج',
 
     'nav.dashboard': 'لوحة التحكم',

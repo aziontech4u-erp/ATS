@@ -6,6 +6,15 @@ WORKDIR /app
 # Where the actual Vite project lives in this monorepo-ish layout
 ARG APP_DIR=recruitment-ats-app/recruitment-ats-app
 
+# Initial admin seed (baked into the bundle as VITE_* vars). One-time
+# bootstrap — admin is forced to rotate on first sign-in.
+ARG VITE_INITIAL_ADMIN_EMAIL=admin@ats.local
+ARG VITE_INITIAL_ADMIN_PASSWORD=ChangeMe@1234
+ARG VITE_INITIAL_ADMIN_NAME=Administrator
+ENV VITE_INITIAL_ADMIN_EMAIL=${VITE_INITIAL_ADMIN_EMAIL} \
+    VITE_INITIAL_ADMIN_PASSWORD=${VITE_INITIAL_ADMIN_PASSWORD} \
+    VITE_INITIAL_ADMIN_NAME=${VITE_INITIAL_ADMIN_NAME}
+
 # Install deps with cached layer (only re-runs on package*.json change)
 COPY ${APP_DIR}/package.json ${APP_DIR}/package-lock.json* ./
 RUN npm ci --no-audit --no-fund

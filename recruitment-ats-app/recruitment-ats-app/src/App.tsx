@@ -11,6 +11,7 @@ import OffersView from './components/OffersView';
 import ReportsView from './components/ReportsView';
 import SettingsModal from './components/SettingsModal';
 import LoginView from './components/LoginView';
+import ForcePasswordChangeView from './components/ForcePasswordChangeView';
 import CompanySettingsView from './components/CompanySettingsView';
 import IntakeFormView from './components/IntakeFormView';
 import CalendarView from './components/CalendarView';
@@ -139,6 +140,16 @@ export default function App() {
     return (
       <>
         <LoginView />
+        <Toast toasts={toasts} onDismiss={dismissToast} />
+      </>
+    );
+  }
+
+  // ── Forced password change after first sign-in with the seeded password ──
+  if (user.mustChangePassword) {
+    return (
+      <>
+        <ForcePasswordChangeView />
         <Toast toasts={toasts} onDismiss={dismissToast} />
       </>
     );

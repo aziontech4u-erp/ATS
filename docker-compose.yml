@@ -4,6 +4,13 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+      args:
+        # Initial admin baked into the bundle at build time. The admin is
+        # forced to rotate their password on first sign-in, after which the
+        # initial password stops working.
+        VITE_INITIAL_ADMIN_EMAIL: ${VITE_INITIAL_ADMIN_EMAIL:-admin@ats.local}
+        VITE_INITIAL_ADMIN_PASSWORD: ${VITE_INITIAL_ADMIN_PASSWORD:-ChangeMe@1234}
+        VITE_INITIAL_ADMIN_NAME: ${VITE_INITIAL_ADMIN_NAME:-Administrator}
     container_name: ats-app
     restart: unless-stopped
     ports:

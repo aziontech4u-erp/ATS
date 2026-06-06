@@ -1,21 +1,23 @@
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 import type { Lang } from './i18n';
 import { tr } from './i18n';
+import {
+  ensureSeed, verifyPassword, changePassword as changeAdminPassword,
+  loadAdmin, type ChangePasswordResult
+} from './auth';
 
 export type Theme = 'light' | 'dark';
 
 export interface AuthUser {
   email: string;
   name: string;
-  role: 'admin' | 'recruiter' | 'demo';
+  role: 'admin' | 'recruiter';
+  mustChangePassword: boolean;
 }
 
 const THEME_KEY = 'recruitment_ats_theme';
 const LANG_KEY = 'recruitment_ats_lang';
 const AUTH_KEY = 'recruitment_ats_session';
-
-export const DEMO_EMAIL = 'demo@ats.local';
-export const DEMO_PASSWORD = 'demo1234';
 
 interface UiContextValue {
   theme: Theme;
@@ -28,8 +30,9 @@ interface UiContextValue {
   dir: 'ltr' | 'rtl';
 
   user: AuthUser | null;
-  signIn: (email: string, password: string) => { ok: true } | { ok: false; error: string };
+  signIn: (email: string, password: string) => Promise<{ ok: true } | { ok: false; error: string }>;
   signOut: () => void;
+  changePassword: (currentPassword: string, newPassword: string) => Promise<ChangePasswordResult>;
 }
 
 const UiContext = createContext<UiContextValue | null>(null);
@@ -52,10 +55,24 @@ function loadUser(): AuthUser | null {
   try {
     const raw = localStorage.getItem(AUTH_KEY);
     if (!raw) return null;
-    return JSON.parse(raw) as AuthUser;
+    const parsed = JSON.parse(raw) as Partial<AuthUser>;
+    if (!parsed.email || !parsed.role) return null;
+    // Legacy session record (no mustChangePassword field) — assume false.
+    // It'll be re-derived from the admin record on next refresh anyway.
+    return {
+      email: parsed.email,
+      name: parsed.name || parsed.email.split('@')[0] || 'User',
+      role: parsed.role === 'recruiter' ? 'recruiter' : 'admin',
+      mustChangePassword: parsed.mustChangePassword === true
+    };
   } catch {
     return null;
   }
+}
+
+function persistSession(u: AuthUser | null) {
+  if (u) localStorage.setItem(AUTH_KEY, JSON.stringify(u));
+  else localStorage.removeItem(AUTH_KEY);
 }
 
 export function UiProvider({ children }: { children: ReactNode }) {
@@ -76,6 +93,26 @@ export function UiProvider({ children }: { children: ReactNode }) {
     localStorage.setItem(LANG_KEY, lang);
   }, [lang]);
 
+  // Seed the admin record on first launch + keep the session in sync with
+  // the latest mustChangePassword state from the admin record.
+  useEffect(() => {
+    let cancelled = false;
+    ensureSeed().then((admin) => {
+      if (cancelled) return;
+      const current = loadUser();
+      if (current && current.email === admin.email && current.mustChangePassword !== admin.mustChangePassword) {
+        const next = { ...current, mustChangePassword: admin.mustChangePassword };
+        persistSession(next);
+        setUser(next);
+      } else if (current && current.email !== admin.email) {
+        // Session points at a stale admin (e.g. env defaults changed). Drop it.
+        persistSession(null);
+        setUser(null);
+      }
+    });
+    return () => { cancelled = true; };
+  }, []);
+
   const value = useMemo<UiContextValue>(() => ({
     theme,
     setTheme: setThemeState,
@@ -87,26 +124,40 @@ export function UiProvider({ children }: { children: ReactNode }) {
     dir: lang === 'ar' ? 'rtl' : 'ltr',
 
     user,
-    signIn: (email, password) => {
+
+    signIn: async (email, password) => {
       const e = email.trim().toLowerCase();
-      if (e === DEMO_EMAIL && password === DEMO_PASSWORD) {
-        const u: AuthUser = { email: DEMO_EMAIL, name: 'Demo User', role: 'demo' };
-        localStorage.setItem(AUTH_KEY, JSON.stringify(u));
-        setUser(u);
-        return { ok: true };
+      if (!e || !password) {
+        return { ok: false, error: tr(lang, 'login.invalid') };
       }
-      // Allow any non-empty email/password as "admin" for self-hosted use.
-      if (e && password && password.length >= 4) {
-        const u: AuthUser = { email: e, name: e.split('@')[0] || 'User', role: 'admin' };
-        localStorage.setItem(AUTH_KEY, JSON.stringify(u));
-        setUser(u);
-        return { ok: true };
+      const admin = await verifyPassword(e, password);
+      if (!admin) {
+        return { ok: false, error: tr(lang, 'login.invalid') };
       }
-      return { ok: false, error: tr(lang, 'login.invalid') };
+      const u: AuthUser = {
+        email: admin.email,
+        name: admin.name,
+        role: 'admin',
+        mustChangePassword: admin.mustChangePassword
+      };
+      persistSession(u);
+      setUser(u);
+      return { ok: true };
     },
+
     signOut: () => {
-      localStorage.removeItem(AUTH_KEY);
+      persistSession(null);
       setUser(null);
+    },
+
+    changePassword: async (currentPassword, newPassword) => {
+      const result = await changeAdminPassword(currentPassword, newPassword);
+      if (result.ok && user) {
+        const next: AuthUser = { ...user, mustChangePassword: false };
+        persistSession(next);
+        setUser(next);
+      }
+      return result;
     }
   }), [theme, lang, user]);
 
@@ -117,4 +168,10 @@ export function useUi(): UiContextValue {
   const ctx = useContext(UiContext);
   if (!ctx) throw new Error('useUi must be used within UiProvider');
   return ctx;
+}
+
+// Expose the configured admin email so the login screen can show a hint of
+// the expected email without leaking the password.
+export function getAdminEmailHint(): string {
+  return loadAdmin()?.email || '';
 }

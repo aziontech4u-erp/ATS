@@ -19,16 +19,7 @@ export function defaultCompanySettings(): CompanySettings {
       taxId: '',
       logoDataUrl: ''
     },
-    users: [
-      {
-        id: uid(),
-        name: 'Demo Admin',
-        email: 'demo@ats.local',
-        role: 'Admin',
-        status: 'active',
-        createdAt: new Date().toISOString()
-      }
-    ],
+    users: [],
     notifications: {
       emailNewCandidate: true,
       emailInterviewReminder: true,

@@ -30,12 +30,22 @@ sudo chown -R $USER:$USER ATS
 cd ATS
 ```
 
-## 2. Configure the host port
+## 2. Configure the host port + initial admin
 
 ```sh
 cp .env.example .env
-# Leave APP_PORT=5174 — it matches your nginx-proxy-manager forward.
+# Edit .env and set, at minimum:
+#   APP_PORT=5174                                ← matches NPM forward
+#   VITE_INITIAL_ADMIN_EMAIL=admin@ziontech.local
+#   VITE_INITIAL_ADMIN_PASSWORD=...              ← pick something strong-ish
+#   VITE_INITIAL_ADMIN_NAME=ZIONTECH Admin
 ```
+
+> **Important security note.** The initial password is baked into the
+> client bundle at build time. Anyone who downloads the JS can read it.
+> That's why the app forces an immediate password rotation on first
+> sign-in — once that's done, the bundled string stops being a valid
+> credential. Pick something one-time-use here, not your real password.
 
 ## 3. Build and start
 
@@ -72,6 +82,22 @@ Nothing else needs to change in NPM. Verify in your browser:
 
 - `https://recruitment.erpoman.in/` — main app (login screen).
 - `https://recruitment.erpoman.in/ats-jobform` — public intake form.
+
+### First sign-in (one time)
+
+1. Open the app — you see the **Sign in to your ATS** screen.
+2. Use the email + password from the `VITE_INITIAL_ADMIN_*` values in `.env`.
+3. The app immediately routes you to **Set a New Password** — there is no
+   way around this screen. Pick a strong password (10+ chars, upper +
+   lower + digit + symbol) and save.
+4. After that, the initial password no longer works. Future sign-ins use
+   the new one. You can rotate again any time from **Company Settings →
+   Security → Change Password**.
+
+If you ever lose the admin password, clear the browser's localStorage
+(`recruitment_ats_admin_v1` and `recruitment_ats_session`) and the next
+visit will re-seed from the build-time defaults. There is no email-based
+recovery because there is no backend.
 
 ## 5. Updating after a `git push`
 

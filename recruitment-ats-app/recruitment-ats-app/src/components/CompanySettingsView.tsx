@@ -1,7 +1,8 @@
 import { useMemo, useState } from 'react';
 import {
   Building2, Users as UsersIcon, Bell, Plug, Palette, ShieldCheck,
-  ScrollText, Database, Upload, Save, Trash2, Plus, Download, Image as ImageIcon
+  ScrollText, Database, Upload, Save, Trash2, Plus, Download, Image as ImageIcon,
+  KeyRound, Eye, EyeOff, Loader2, CheckCircle2, AlertTriangle
 } from 'lucide-react';
 import type {
   CompanySettings, UserAccount
@@ -11,6 +12,7 @@ import {
 } from '../lib/companySettings';
 import { useUi } from '../lib/uiContext';
 import { uid } from '../lib/storage';
+import { passwordScore, STRENGTH_LABELS } from '../lib/auth';
 
 interface Props {
   onToast: (msg: string, type?: 'success' | 'error' | 'info') => void;
@@ -465,6 +467,7 @@ function SecurityTab({ settings, patch }: { settings: CompanySettings; patch: (s
   }
   return (
     <>
+      <ChangePasswordCard />
       <Card title="Access">
         <div className="grid grid-cols-2 gap-2">
           <Toggle on={s.mfaRequired} onChange={(v) => set('mfaRequired', v)} label="Require multi-factor authentication" />
@@ -587,5 +590,117 @@ function BackupTab({
         </label>
       </Card>
     </>
+  );
+}
+
+// ── Change Password ─────────────────────────────────────────────
+
+function ChangePasswordCard() {
+  const { user, changePassword } = useUi();
+  const [current, setCurrent] = useState('');
+  const [next, setNext] = useState('');
+  const [confirm, setConfirm] = useState('');
+  const [show, setShow] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+  const [ok, setOk] = useState(false);
+
+  const score = passwordScore(next);
+  const label = STRENGTH_LABELS[score] ?? '';
+  const color = ['bg-rose-500', 'bg-rose-400', 'bg-amber-400', 'bg-lime-500', 'bg-green-500'][score] || 'bg-slate-300';
+
+  async function submit(e: React.FormEvent) {
+    e.preventDefault();
+    if (busy) return;
+    setErr(null); setOk(false);
+    if (next !== confirm) { setErr('New password and confirmation do not match.'); return; }
+    setBusy(true);
+    const res = await changePassword(current, next);
+    setBusy(false);
+    if (!res.ok) { setErr(res.error); return; }
+    setOk(true);
+    setCurrent(''); setNext(''); setConfirm('');
+  }
+
+  return (
+    <Card title="Change Password">
+      <p className="mb-3 text-[11px] leading-relaxed text-slate-500 dark:text-slate-400">
+        Signed in as <code className="rounded bg-slate-100 px-1.5 py-0.5 text-[10.5px] dark:bg-slate-800">{user?.email}</code>.
+        Choose a strong new password — at least 10 characters with upper, lower, digit and symbol.
+      </p>
+      <form onSubmit={submit} className="grid grid-cols-1 gap-3 md:grid-cols-3">
+        <PasswordField label="Current" value={current} onChange={setCurrent} show={show} autoComplete="current-password" />
+        <PasswordField label="New" value={next} onChange={setNext} show={show} autoComplete="new-password" minLength={10} />
+        <PasswordField label="Confirm New" value={confirm} onChange={setConfirm} show={show} autoComplete="new-password" />
+      </form>
+      <div className="mt-2 flex items-center gap-3">
+        <label className="flex items-center gap-1.5 text-[10.5px] text-slate-500 dark:text-slate-400">
+          <input type="checkbox" checked={show} onChange={(e) => setShow(e.target.checked)} className="h-3 w-3 accent-brand-500" />
+          Show passwords
+        </label>
+        {next && (
+          <div className="flex flex-1 items-center gap-2">
+            <div className="flex h-1 flex-1 gap-0.5 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-700">
+              {[0, 1, 2, 3].map((i) => (
+                <span key={i} className={`flex-1 transition-colors ${i < score ? color : ''}`} />
+              ))}
+            </div>
+            <span className="w-20 text-end text-[10px] font-semibold text-slate-500 dark:text-slate-400">{label}</span>
+          </div>
+        )}
+      </div>
+      {err && (
+        <div className="mt-3 flex items-start gap-2 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-[11.5px] text-rose-700 dark:border-rose-900/60 dark:bg-rose-900/20 dark:text-rose-300">
+          <AlertTriangle size={13} className="mt-0.5 flex-shrink-0" />{err}
+        </div>
+      )}
+      {ok && (
+        <div className="mt-3 flex items-start gap-2 rounded-lg border border-green-200 bg-green-50 px-3 py-2 text-[11.5px] text-green-700 dark:border-green-900/60 dark:bg-green-900/20 dark:text-green-300">
+          <CheckCircle2 size={13} className="mt-0.5 flex-shrink-0" />Password updated. Use the new one next time you sign in.
+        </div>
+      )}
+      <div className="mt-3 flex justify-end">
+        <button
+          onClick={submit}
+          disabled={busy}
+          className="flex items-center gap-1.5 rounded-lg bg-brand-500 px-4 py-2 text-xs font-semibold text-white hover:bg-brand-600 disabled:opacity-60"
+        >
+          {busy ? <Loader2 size={13} className="animate-spin" /> : <KeyRound size={13} />}
+          Update Password
+        </button>
+      </div>
+    </Card>
+  );
+}
+
+function PasswordField({
+  label, value, onChange, show, autoComplete, minLength
+}: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  show: boolean;
+  autoComplete: string;
+  minLength?: number;
+}) {
+  const [localShow, setLocalShow] = useState(false);
+  const visible = show || localShow;
+  return (
+    <Row label={label}>
+      <div className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 focus-within:border-brand-500 dark:border-slate-700 dark:bg-slate-800">
+        <input
+          type={visible ? 'text' : 'password'}
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          autoComplete={autoComplete}
+          minLength={minLength}
+          required
+          className="flex-1 bg-transparent text-xs outline-none text-slate-900 dark:text-slate-100"
+        />
+        <button type="button" onClick={() => setLocalShow((p) => !p)} className="text-slate-400 hover:text-slate-700 dark:hover:text-slate-200">
+          {visible ? <EyeOff size={13} /> : <Eye size={13} />}
+        </button>
+      </div>
+    </Row>
   );
 }
